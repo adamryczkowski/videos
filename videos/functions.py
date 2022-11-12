@@ -28,3 +28,7 @@ def make_links(conf_file: Path | str = "video_downloads.toml"):
     m = Main(conf_file)
     for vids in m.videos_iterator:
         vids.write_links()
+
+
+if __name__ == '__main__':
+    make_links()
