@@ -1,0 +1,3 @@
+video_definition_dir = "_channels"
+link_queue_dir = "_channels/links"
+target_dir = "/home/adam/Videos/Youtube"

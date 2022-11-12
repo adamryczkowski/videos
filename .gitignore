@@ -1,0 +1,11 @@
+.idea
+*.egg-info
+*.log
+venv*
+*.zip
+*.json
+*.pickle
+.mypy_cache
+test
+__pycache__
+_channels
