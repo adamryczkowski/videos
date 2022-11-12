@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from objects import Main, Video
+from videos.objects import Main, Video
 
 
 def download_all(conf_file: Path | str = "video_downloads.toml"):

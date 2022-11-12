@@ -5,7 +5,7 @@ from typing import Iterator
 import toml
 import yt_dlp
 
-from common import load_config
+from videos.common import load_config
 
 
 class Video:

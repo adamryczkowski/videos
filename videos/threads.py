@@ -4,7 +4,7 @@ from queue import Queue
 from threading import Thread
 from time import time
 
-from functions import Main, download_link  # setup_download_dir, get_links, download_link
+from videos.functions import Main, download_link  # setup_download_dir, get_links, download_link
 
 # Template from https://www.toptal.com/python/beginners-guide-to-concurrency-and-parallelism-in-python
 
