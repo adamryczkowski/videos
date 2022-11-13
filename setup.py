@@ -16,5 +16,5 @@ setup(name=PKG_NAME,
       ],
       entry_points='''
       [console_scripts]
-      download_all=videos.threads:init
+      download_all=videos.threads:main
     ''')
