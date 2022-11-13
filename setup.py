@@ -1,7 +1,8 @@
 import os
 from setuptools import setup, find_packages
+
 HERE = os.path.abspath(os.path.dirname(__file__))
-PKG_NAME='videos'
+PKG_NAME = 'videos'
 VERPATH = os.path.join(HERE, PKG_NAME, '_version.py')
 exec(open(VERPATH).read())
 
@@ -11,10 +12,13 @@ setup(name=PKG_NAME,
       packages=find_packages(),
       include_package_data=True,
       install_requires=[
-      'yt-dlp',
-      'toml'
+          'yt-dlp',
+          'toml'
       ],
-      entry_points='''
-      [console_scripts]
-      download_all=videos.threads:main
-    ''')
+      entry_points={
+          "console_scripts": [
+              "download_all=videos.threads:main",
+              "fetch_links=videos.functions:make_links"
+          ]
+      }
+      )
