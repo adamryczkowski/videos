@@ -55,4 +55,4 @@ def main(worker_count: int = 3, conf_file: Path | str = "video_downloads.toml"):
 
 
 if __name__ == '__main__':
-    main(conf_file="../video_downloads.toml")
+    main(conf_file="video_downloads.toml")

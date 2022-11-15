@@ -100,19 +100,40 @@ class Videos:
     def _get_new_links(self):
         if self._info is not None:
             return
-        yt = yt_dlp.YoutubeDL(params={"extract_flat": 'in_playlist', "simulate": True, "dump_single_json": True})
+        if "last_video" in self._conf:
+            target_id = self._conf["last_video"]
+            yt = yt_dlp.YoutubeDL(params={
+                "extract_flat": 'in_playlist', "simulate": True, "dump_single_json": True,
+                "playlist_items": f"0:10:1"})
+            ans = yt.extract_info(url=self.link)
+            for i, entry in enumerate(ans["entries"]):
+                if entry["id"] == target_id:
+                    ans["entries"] = ans["entries"][0:i]
+                    self._info = ans
+                    return
+
+        yt = yt_dlp.YoutubeDL(params={
+            "extract_flat": 'in_playlist', "simulate": True, "dump_single_json": True})
         ans = yt.extract_info(url=self.link)
+        entries = ans["entries"]
+        le = len(entries)
+        entries = entries[0:le - self._conf["last_download_index"]]
+        ans["entries"] = entries
+
         self._info = ans
+
 
     @property
     def channel_name(self) -> str:
         self._get_new_links()
         return self._info["channel"]
 
+
     @property
     def channel_url(self) -> str:
         self._get_new_links()
         return self._info["channel_url"]
+
 
     @property
     def video_iterator(self) -> Iterator[Video]:
@@ -123,6 +144,7 @@ class Videos:
             vid = Video(entry)
             yield vid
 
+
     def __getitem__(self, item: int) -> Video:
         self._get_new_links()
         self._info["entries"][item]["my_index"] = item
@@ -130,18 +152,21 @@ class Videos:
         vid = Video(self._info["entries"][item])
         return vid
 
+
     def __len__(self) -> int:
         self._get_new_links()
         return len(self._info["entries"])
+
 
     def write_links(self):
         self._get_new_links()
         self.make_folders()
         last_index = self._conf["last_download_index"]
-        for i in range(last_index + 1, len(self)):
+        for i in range(0, len(self)):
             entry = self[i]
             entry.write_json(self._cache_dir)
-            self._conf["last_download_index"] = i
+            self._conf["last_download_index"] = self._conf["last_download_index"] + 1
+            self._conf["last_video"] = entry.id
             with open(self._conf_file, "w") as toml_file:
                 toml.dump(self._conf, toml_file)
 
