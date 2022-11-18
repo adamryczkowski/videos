@@ -104,7 +104,7 @@ class Videos:
             target_id = self._conf["last_video"]
             yt = yt_dlp.YoutubeDL(params={
                 "extract_flat": 'in_playlist', "simulate": True, "dump_single_json": True,
-                "playlist_items": f"0:10:1"})
+                "playlist_items": f"0:5:1"})
             ans = yt.extract_info(url=self.link)
             for i, entry in enumerate(ans["entries"]):
                 if entry["id"] == target_id:
@@ -118,22 +118,19 @@ class Videos:
         entries = ans["entries"]
         le = len(entries)
         entries = entries[0:le - self._conf["last_download_index"]]
-        ans["entries"] = entries
+        ans["entries"] = list(reversed(entries))
 
         self._info = ans
-
 
     @property
     def channel_name(self) -> str:
         self._get_new_links()
         return self._info["channel"]
 
-
     @property
     def channel_url(self) -> str:
         self._get_new_links()
         return self._info["channel_url"]
-
 
     @property
     def video_iterator(self) -> Iterator[Video]:
@@ -144,7 +141,6 @@ class Videos:
             vid = Video(entry)
             yield vid
 
-
     def __getitem__(self, item: int) -> Video:
         self._get_new_links()
         self._info["entries"][item]["my_index"] = item
@@ -152,11 +148,9 @@ class Videos:
         vid = Video(self._info["entries"][item])
         return vid
 
-
     def __len__(self) -> int:
         self._get_new_links()
         return len(self._info["entries"])
-
 
     def write_links(self):
         self._get_new_links()
