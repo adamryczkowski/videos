@@ -125,6 +125,8 @@ class Videos:
         yt = yt_dlp.YoutubeDL(params={
             "extract_flat": 'in_playlist', "simulate": True, "dump_single_json": True, "quiet": True})
         ans = yt.extract_info(url=self.link)
+        if ans["webpage_url_domain"] == 'piped.video':
+            ans = ans["entries"][0]
         entries = ans["entries"]
         le = len(entries)
         entries = entries[0:le - self._conf["last_download_index"]]
