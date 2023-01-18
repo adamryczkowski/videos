@@ -4,7 +4,8 @@ from queue import Queue
 from threading import Thread
 from time import time
 
-from videos.functions import Main, download_link  # setup_download_dir, get_links, download_link
+from videos.functions import Main  # setup_download_dir, get_links, download_link
+from videos.objects import download_link
 
 # Template from https://www.toptal.com/python/beginners-guide-to-concurrency-and-parallelism-in-python
 
@@ -24,7 +25,7 @@ class DownloadWorker(Thread):
             # Get the work from the queue and expand the tuple
             directory, link = self.queue.get()
             try:
-                download_link(link, directory)
+                download_link(Path(link), directory)
             finally:
                 self.queue.task_done()
 

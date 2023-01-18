@@ -70,6 +70,7 @@ class Video:
         yt.download(self.url)
 
 
+
 class Videos:
     _conf: dict
     _cache_dir: Path
@@ -100,25 +101,40 @@ class Videos:
     def _get_new_links(self):
         if self._info is not None:
             return
+        print(f"Checking for new videos from {self._conf['target_folder']}...", end="")
+
         if "last_video" in self._conf:
             target_id = self._conf["last_video"]
             yt = yt_dlp.YoutubeDL(params={
                 "extract_flat": 'in_playlist', "simulate": True, "dump_single_json": True,
-                "playlist_items": f"0:5:1"})
+                "playlist_items": f"0:5:1",
+                "quiet": True})
             ans = yt.extract_info(url=self.link)
             for i, entry in enumerate(ans["entries"]):
                 if entry["id"] == target_id:
                     ans["entries"] = ans["entries"][0:i]
                     self._info = ans
+                    if len(ans["entries"]) == 0:
+                        print(" nothing.")
+                    elif len(ans["entries"]) == 1:
+                        print(" 1 video found.")
+                    else:
+                        print(f" {len(ans['entries'])} videos found.")
                     return
 
         yt = yt_dlp.YoutubeDL(params={
-            "extract_flat": 'in_playlist', "simulate": True, "dump_single_json": True})
+            "extract_flat": 'in_playlist', "simulate": True, "dump_single_json": True, "quiet": True})
         ans = yt.extract_info(url=self.link)
         entries = ans["entries"]
         le = len(entries)
         entries = entries[0:le - self._conf["last_download_index"]]
         ans["entries"] = list(reversed(entries))
+        if len(ans["entries"]) == 0:
+            print(" nothing.")
+        elif len(ans["entries"]) == 1:
+            print(" 1 video found.")
+        else:
+            print(f" {len(ans['entries'])} videos found.")
 
         self._info = ans
 
@@ -161,6 +177,7 @@ class Videos:
             entry.write_json(self._cache_dir)
             self._conf["last_download_index"] = self._conf["last_download_index"] + 1
             self._conf["last_video"] = entry.id
+            print(f"New video from {entry.channel_name}: {entry.title}")
             with open(self._conf_file, "w") as toml_file:
                 toml.dump(self._conf, toml_file)
 
@@ -222,12 +239,25 @@ def download():
     m = Main()
     path = m.link_queue_dir
     for json_file in path.glob('*.json'):
-        with open(json_file, 'rb') as f:
-            json_entry = json.load(f)
-        vid = Video(json_entry)
-        assert str(m.link_queue_dir / vid.json_filename) == str(json_file)
-        vid.download(m.target_prefix)
-        Path(json_file).unlink()
+        download_link(json_file, m.target_prefix)
+        # with open(json_file, 'rb') as f:
+        #     json_entry = json.load(f)
+        # vid = Video(json_entry)
+        # assert str(m.link_queue_dir / vid.json_filename) == str(json_file)
+        # vid.download(m.target_prefix)
+        # Path(json_file).unlink()
+
+
+def download_link(json_file: Path, target_prefix: Path):
+    with open(str(json_file), 'rb') as f:
+        json_entry = json.load(f)
+    vid = Video(json_entry)
+    try:
+        vid.download(target_prefix)
+    except yt_dlp.DownloadError as d:
+        json_file.rename(json_file.with_suffix(".broken"))
+    else:
+        json_file.unlink()
 
 
 def test():
