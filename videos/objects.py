@@ -58,7 +58,7 @@ class Video:
     @property
     def json_filename(self) -> str:
         strhash = self.id
-        file = strhash[:20] + ".json"
+        file = strhash[:20] + ".link"
         return file
 
     def download(self, dir: Path):
@@ -240,7 +240,7 @@ class Main:
 def download():
     m = Main()
     path = m.link_queue_dir
-    for json_file in path.glob('*.json'):
+    for json_file in path.glob('*.link'):
         download_link(json_file, m.target_prefix)
         # with open(json_file, 'rb') as f:
         #     json_entry = json.load(f)

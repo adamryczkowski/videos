@@ -7,7 +7,7 @@ from videos.objects import Main, Video
 def download_all(conf_file: Path | str = "video_downloads.toml"):
     m = Main(conf_file)
     path = m.link_queue_dir
-    for json_file in path.glob('*.json'):
+    for json_file in path.glob('*.link'):
         with open(json_file, 'rb') as f:
             json_entry = json.load(f)
         vid = Video(json_entry)
