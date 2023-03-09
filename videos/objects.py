@@ -237,8 +237,8 @@ class Main:
         return vids
 
 
-def download():
-    m = Main()
+def download(conf_file:str="video_downloads.toml"):
+    m = Main(conf_file)
     path = m.link_queue_dir
     for json_file in path.glob('*.link'):
         download_link(json_file, m.target_prefix)
@@ -270,4 +270,4 @@ def test():
 
 if __name__ == '__main__':
     # test()
-    download()
+    download(conf_file="video_downloads.toml")
