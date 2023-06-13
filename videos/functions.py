@@ -1,7 +1,8 @@
 import json
 from pathlib import Path
-import yt_dlp
-from videos.objects import Main, Video
+
+from .main import Main
+from .video import Video
 
 
 def download_all(conf_file: Path | str = "video_downloads.toml"):
@@ -14,7 +15,6 @@ def download_all(conf_file: Path | str = "video_downloads.toml"):
         assert str(m.link_queue_dir / vid.json_filename) == str(json_file)
         vid.download(m.target_prefix)
         Path(json_file).unlink()
-
 
 
 def make_links(conf_file: Path | str = "video_downloads.toml"):

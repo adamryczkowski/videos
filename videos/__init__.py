@@ -1,2 +1,4 @@
-from videos.functions import  make_links
-from videos.objects import Main, download_link
+from .videos import Videos
+from .video import Video
+from .functions import make_links, download_all
+from .main import download, Main
