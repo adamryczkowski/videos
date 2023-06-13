@@ -44,6 +44,8 @@ class Video(IVideo):
 
     @property
     def max_height(self) -> str:
+        if "max_height" not in self._entry:
+            return "1080"
         return self._entry["max_height"]
 
     @property
