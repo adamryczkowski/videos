@@ -1,10 +1,12 @@
 import json
 from pathlib import Path
 import yt_dlp
+from .ifaces import IVideos, IVideo
 
 
-class Video:
+class Video(IVideo):
     _entry: dict
+    _parent: IVideos
 
     @staticmethod
     def LoadFromJSON(json_path: Path):
@@ -41,6 +43,10 @@ class Video:
         return self._entry["my_title"]
 
     @property
+    def max_height(self) -> str:
+        return self._entry["max_height"]
+
+    @property
     def url(self) -> str:
         return self._entry["url"]
 
@@ -57,10 +63,9 @@ class Video:
         return file
 
     def download(self, dir: Path):
-        ydl_opts = {'format': "bestvideo[height<=1080]+bestaudio/best",
+        ydl_opts = {'format': f"bestvideo[height<={self.max_height}]+bestaudio/best",
                     'outtmpl': {'default': f"{dir / self.channel_name}/%(upload_date)s %(title)s.%(ext)s"},
                     'subtitleslangs': ['pl', 'en', 'ru'],
                     'writesubtitles': True, 'writethumbnail': True}
         yt = yt_dlp.YoutubeDL(params=ydl_opts)
         yt.download(self.url)
-

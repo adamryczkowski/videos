@@ -5,16 +5,21 @@ from typing import Iterator
 import toml
 import yt_dlp
 
+from .ifaces import IVideo, IVideos
 from .video import Video
 
 
 def load_config(conf_file: Path | str) -> dict:
     with open(str(conf_file), "rb") as f:
         data = tomllib.load(f)
+    if "max_height" not in data:
+        data["max_height"] = 1080
+    if "last_download_index" not in data:
+        data["last_download_index"] = 0
     return data
 
 
-class Videos:
+class Videos(IVideos):
     _conf: dict
     _cache_dir: Path
     _info: dict | None
@@ -35,6 +40,10 @@ class Videos:
 
     def make_folders(self):
         self.target_folder.mkdir(parents=True, exist_ok=True)
+
+    @property
+    def max_height(self) -> int:
+        return self._conf["max_height"]
 
     @property
     def target_folder(self) -> Path:
@@ -94,18 +103,20 @@ class Videos:
         return self._info["channel_url"]
 
     @property
-    def video_iterator(self) -> Iterator[Video]:
+    def video_iterator(self) -> Iterator[IVideo]:
         self._get_new_links()
         for i, entry in enumerate(self._info["entries"]):
             entry["my_index"] = i
             entry["my_title"] = self._conf["target_folder"]
+            entry["max_height"] = self.max_height
             vid = Video(entry)
             yield vid
 
-    def __getitem__(self, item: int) -> Video:
+    def __getitem__(self, item: int) -> IVideo:
         self._get_new_links()
         self._info["entries"][item]["my_index"] = item
         self._info["entries"][item]["my_title"] = self._conf["target_folder"]
+        self._info["entries"][item]["max_height"] = self.max_height
         vid = Video(self._info["entries"][item])
         return vid
 
