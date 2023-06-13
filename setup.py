@@ -18,7 +18,7 @@ setup(name=PKG_NAME,
       entry_points={
           "console_scripts": [
               "download_all=videos.threads:main",
-              "download_st=videos.objects:download",
+              "download_st=videos.main:download",
               "fetch_links=videos.functions:make_links"
           ]
       }
