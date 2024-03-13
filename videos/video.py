@@ -64,10 +64,18 @@ class Video(IVideo):
         file = strhash[:20] + ".link"
         return file
 
-    def download(self, dir: Path):
+    def download(self, dir: Path)->Path:
+        filename = ""
+        def set_filename(self, d):
+            nonlocal filename
+            filename = d
         ydl_opts = {'format': f"bestvideo[height<={self.max_height}]+bestaudio/best",
                     'outtmpl': {'default': f"{dir / self.channel_name}/%(upload_date)s %(title)s.%(ext)s"},
                     'subtitleslangs': ['pl', 'en', 'ru'],
-                    'writesubtitles': True, 'writethumbnail': True}
+                    'writedescription': True,
+                    'writesubtitles': True, 'writethumbnail': True,
+                    'progress_hooks': [set_filename]}
+
         yt = yt_dlp.YoutubeDL(params=ydl_opts)
         yt.download(self.url)
+        return Path(filename)
