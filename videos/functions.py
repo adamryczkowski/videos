@@ -4,6 +4,12 @@ from pathlib import Path
 from .main import Main
 from .video import Video
 
+import subprocess
+import sys
+
+def install(package):
+    subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+
 
 def download_all(conf_file: Path | str = "video_downloads.toml"):
     m = Main(conf_file)
@@ -18,6 +24,7 @@ def download_all(conf_file: Path | str = "video_downloads.toml"):
 
 
 def make_links(conf_file: Path | str = "video_downloads.toml"):
+    install("yt-dlp")
     m = Main(conf_file)
     for vids in m.videos_iterator:
         vids.write_links()
