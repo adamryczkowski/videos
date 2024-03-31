@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Iterator
 from .videos import load_config, Videos
 from .video import Video
-
+import os
 import yt_dlp
 
 
@@ -26,6 +26,9 @@ class Main:
         path.mkdir(parents=True, exist_ok=True)
         path = self.video_definition_dir
         path.mkdir(parents=True, exist_ok=True)
+        if self.symlink_dir is not None:
+            path = self.symlink_dir
+            path.mkdir(parents=True, exist_ok=True)
 
     @property
     def video_definition_dir(self) -> Path:
@@ -44,6 +47,16 @@ class Main:
     @property
     def target_prefix(self) -> Path:
         path = Path(self._conf["target_dir"])
+        if not path.is_absolute():
+            path = self._base_dir / path
+        return path
+
+
+    @property
+    def symlink_dir(self) -> Path|None:
+        if "symlink_dir" not in self._conf:
+            return None
+        path = Path(self._conf["symlink_dir"])
         if not path.is_absolute():
             path = self._base_dir / path
         return path
@@ -72,12 +85,15 @@ def download(conf_file:str="video_downloads.toml"):
         # Path(json_file).unlink()
 
 
-def download_link(json_file: Path, target_prefix: Path):
+def download_link(json_file: Path, target_prefix: Path, symlink_dir: Path | None = None):
     with open(str(json_file), 'rb') as f:
         json_entry = json.load(f)
     vid = Video(json_entry)
     try:
-        vid.download(target_prefix)
+        filename = vid.download(target_prefix)
+        print(f"Movie saved to {filename}")
+        # if symlink_dir is not None:
+        #     os.symlink(str(filename), f"{str(symlink_dir)}/vid.channel_name .target_folder), target_is_directory=True)
     except yt_dlp.DownloadError as d:
         json_file.rename(json_file.with_suffix(".broken"))
     else:
