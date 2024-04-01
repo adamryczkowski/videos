@@ -64,7 +64,7 @@ class Video(IVideo):
         file = strhash[:20] + ".link"
         return file
 
-    def download(self, dir: Path)->Path:
+    def download(self, dir: Path)->Path|None:
         filename = ""
         def set_filename(d):
             nonlocal filename
@@ -78,4 +78,7 @@ class Video(IVideo):
 
         yt = yt_dlp.YoutubeDL(params=ydl_opts)
         yt.download(self.url)
-        return Path(filename["filename"])
+        if filename != "":
+            return Path(filename["filename"])
+        else:
+            return None
