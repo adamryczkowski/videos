@@ -66,7 +66,7 @@ class Video(IVideo):
 
     def download(self, dir: Path)->Path:
         filename = ""
-        def set_filename(self, d):
+        def set_filename(d):
             nonlocal filename
             filename = d
         ydl_opts = {'format': f"bestvideo[height<={self.max_height}]+bestaudio/best",
