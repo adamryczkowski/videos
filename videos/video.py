@@ -78,4 +78,4 @@ class Video(IVideo):
 
         yt = yt_dlp.YoutubeDL(params=ydl_opts)
         yt.download(self.url)
-        return Path(filename)
+        return Path(filename["filename"])
