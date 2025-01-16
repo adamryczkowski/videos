@@ -69,7 +69,7 @@ class Video(IVideo):
         def set_filename(d):
             nonlocal filename
             filename = d
-        ydl_opts = {'format': f"bestvideo[height<={self.max_height}]+bestaudio/best",
+        ydl_opts = {'format': f"bestvideo[height<={self.max_height}][vcodec!~='vp0?9']+bestaudio/best",
                     'outtmpl': {'default': f"{dir / self.channel_name}/%(upload_date)s %(title)s.%(ext)s"},
                     'subtitleslangs': ['pl', 'en', 'ru'],
                     'writedescription': True,
