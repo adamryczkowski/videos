@@ -1,11 +1,11 @@
 import json
+import subprocess
+import sys
 from pathlib import Path
 
 from .main import Main
 from .video import Video
 
-import subprocess
-import sys
 
 def install(package):
     subprocess.check_call([sys.executable, "-m", "pip", "install", package])

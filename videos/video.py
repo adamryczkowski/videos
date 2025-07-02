@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
+
 import yt_dlp
+
 from .ifaces import IVideos, IVideo
 
 
@@ -64,11 +66,13 @@ class Video(IVideo):
         file = strhash[:20] + ".link"
         return file
 
-    def download(self, dir: Path)->Path|None:
+    def download(self, dir: Path) -> Path | None:
         filename = ""
+
         def set_filename(d):
             nonlocal filename
             filename = d
+
         ydl_opts = {'format': f"bestvideo[height<={self.max_height}][vcodec!~='vp0?9']+bestaudio/best",
                     'outtmpl': {'default': f"{dir / self.channel_name}/%(upload_date)s %(title)s.%(ext)s"},
                     'subtitleslangs': ['pl', 'en', 'ru'],

@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "videos"
+version = "1.6.0"
+description = "A Python package for downloading videos using yt-dlp with multi-threading support"
+authors = ["Adam Ryczkowski"]
+readme = "README.adoc"
+packages = [{include = "videos"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+yt-dlp = "^2025.6.30"
+toml = "^0.10.2"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.4.1"
+
+[tool.poetry.scripts]
+download_all = "videos.threads:main"
+download_st = "videos.main:download"
+fetch_links = "videos.functions:make_links"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

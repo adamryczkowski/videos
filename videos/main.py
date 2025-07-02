@@ -1,13 +1,11 @@
 import json
 from pathlib import Path
 from typing import Iterator
-from .videos import load_config, Videos
-from .video import Video
-import os
+
 import yt_dlp
 
-
-
+from .video import Video
+from .videos import load_config, Videos
 
 
 class Main:
@@ -51,9 +49,8 @@ class Main:
             path = self._base_dir / path
         return path
 
-
     @property
-    def symlink_dir(self) -> Path|None:
+    def symlink_dir(self) -> Path | None:
         if "symlink_dir" not in self._conf:
             return None
         path = Path(self._conf["symlink_dir"])
@@ -72,7 +69,7 @@ class Main:
         return vids
 
 
-def download(conf_file:str="video_downloads.toml"):
+def download(conf_file: str = "video_downloads.toml"):
     m = Main(conf_file)
     path = m.link_queue_dir
     for json_file in path.glob('*.link'):

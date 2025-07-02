@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Iterator
 
+
 class IVideo(ABC):
     @staticmethod
     @abstractmethod
@@ -50,6 +51,7 @@ class IVideo(ABC):
     @abstractmethod
     def download(self, dir: Path):
         pass
+
 
 class IVideos(ABC):
     @property
