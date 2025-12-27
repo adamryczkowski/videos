@@ -1,24 +1,59 @@
-[tool.poetry]
+[build-system]
+requires = ["poetry-core>=2.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[project]
 name = "videos"
 version = "1.6.0"
 description = "A Python package for downloading videos using yt-dlp with multi-threading support"
-authors = ["Adam Ryczkowski"]
 readme = "README.adoc"
-packages = [{include = "videos"}]
+requires-python = ">= 3.10"
+authors = [{ name = "Adam Ryczkowski" }]
+keywords = ["videos", "yt-dlp", "download", "youtube"]
 
-[tool.poetry.dependencies]
-python = "^3.9"
-yt-dlp = "^2025.6.30"
-toml = "^0.10.2"
+[project.urls]
+Homepage = "https://example.com"
 
-[tool.poetry.group.dev.dependencies]
-pytest = "^8.4.1"
-
-[tool.poetry.scripts]
+[project.scripts]
 download_all = "videos.threads:main"
 download_st = "videos.main:download"
 fetch_links = "videos.functions:make_links"
 
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+[tool.poetry]
+packages = [{ include = "videos" }]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+yt-dlp = {version = "^2025.6.30", extras = ["default"]}
+toml = "^0.10.2"
+
+[tool.poetry.group.dev.dependencies]
+pre-commit = "^4.0.1"
+pyright = "^1.1.405"
+
+[tool.poetry.group.test.dependencies]
+pytest = "^8.3.0"
+coverage = "^7.6.0"
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
+
+# Configure pytest discovery so test-mock.py (hyphen) is collected.
+# Keep tests/pytest.ini file empty per requirements; configuration lives here.
+[tool.pytest.ini_options]
+python_files = ["test-*.py", "test_*.py", "*_test.py"]
+testpaths = ["tests"]
+markers = [
+    "integration: marks tests as integration tests (deselect with '-m \"not integration\"')",
+]
+addopts = "-m 'not integration'"
+
+[tool.coverage.run]
+source = ["videos"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_empty = true
+fail_under = 0

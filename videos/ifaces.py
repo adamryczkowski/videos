@@ -21,7 +21,7 @@ class IVideo(ABC):
 
     @property
     @abstractmethod
-    def id(self) -> float:
+    def id(self) -> str:
         pass
 
     @property

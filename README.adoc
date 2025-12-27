@@ -1,0 +1,180 @@
+= Videos - Video Downloader with Multi-threading Support
+:toc:
+:toc-placement: preamble
+:toclevels: 2
+
+A Python package for downloading videos using yt-dlp with multi-threading support and queue management.
+
+== Features
+
+* Multi-threaded video downloads for improved performance
+* Queue-based download management with JSON link files
+* Configuration-driven setup via TOML files
+* Support for custom video quality settings
+* Channel-based organization of downloads
+* Progress tracking and logging
+* Command-line interface with multiple entry points
+
+== Installation
+
+=== Using Poetry (Recommended)
+
+[source,bash]
+----
+poetry install
+----
+
+=== Using pip
+
+[source,bash]
+----
+pip install videos
+----
+
+== Configuration
+
+Create a `video_downloads.toml` configuration file in your project directory:
+
+[source,toml]
+----
+video_definition_dir = "/path/to/your/channels"
+link_queue_dir = "/path/to/your/channels/links"
+target_dir = "/path/to/your/videos"
+----
+
+=== Configuration Options
+
+* `video_definition_dir`: Directory containing video definition files
+* `link_queue_dir`: Directory for queued download links (JSON files)
+* `target_dir`: Target directory for downloaded videos
+
+== Usage
+
+=== Command Line Interface
+
+The package provides three main command-line scripts:
+
+==== Fetch Links
+
+Extract video links and create download queue:
+
+[source,bash]
+----
+fetch_links
+----
+
+This command will:
+
+* Install yt-dlp if not present
+* Process video definitions
+* Create `.link` files in the queue directory
+
+==== Download All (Multi-threaded)
+
+Download all queued videos using multiple threads:
+
+[source,bash]
+----
+download_all
+----
+
+==== Single-threaded Download
+
+Download videos one at a time:
+
+[source,bash]
+----
+download_st
+----
+
+=== Python API
+
+[source,python]
+----
+from videos import Main, Videos, Video
+
+# Initialize with configuration
+main = Main("video_downloads.toml")
+
+# Download all queued videos
+from videos.functions import download_all
+download_all("video_downloads.toml")
+
+# Fetch links for processing
+from videos.functions import make_links
+make_links("video_downloads.toml")
+----
+
+== Project Structure
+
+----
+videos/
+├── __init__.py          # Package initialization and exports
+├── main.py              # Main application class
+├── functions.py         # Core download and link processing functions
+├── threads.py           # Multi-threaded download workers
+├── video.py             # Individual video handling
+├── videos.py            # Video collection management
+├── ifaces.py            # Interface definitions
+└── common.py            # Common utilities
+----
+
+== How It Works
+
+. *Configuration*: Set up your directories in `video_downloads.toml`
+. *Link Generation*: Run `fetch_links` to create `.link` files for each video
+. *Queue Processing*: Run `download_all` to process the queue with multiple threads
+. *Download*: Videos are downloaded to the target directory and organized
+
+== Dependencies
+
+* Python 3.8+
+* yt-dlp: Video downloading
+* toml: Configuration file parsing
+
+== Development
+
+=== Running Tests
+
+[source,bash]
+----
+poetry run pytest
+----
+
+=== Development Dependencies
+
+* pytest ^7.0
+
+== License
+
+This project is developed by Adam Ryczkowski.
+
+== Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+== Troubleshooting
+
+=== Common Issues
+
+* *Permission errors*: Ensure the target directories are writable
+* *yt-dlp not found*: The `fetch_links` command automatically installs yt-dlp
+* *Configuration errors*: Verify your `video_downloads.toml` file paths exist
+
+=== Logging
+
+The application uses Python's logging module. To see detailed output:
+
+[source,python]
+----
+import logging
+logging.basicConfig(level=logging.INFO)
+----
+
+== Version History
+
+* 1.5.3: Current version with improved multi-threading support

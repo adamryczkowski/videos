@@ -57,55 +57,80 @@ class Videos(IVideos):
 
         if "last_video" in self._conf:
             target_id = self._conf["last_video"]
-            yt = yt_dlp.YoutubeDL(params={
-                "extract_flat": 'in_playlist', "simulate": True, "dump_single_json": True,
-                "playlist_items": f"0:5:1",
-                "quiet": True})
-            ans = yt.extract_info(url=self.link)
-            for i, entry in enumerate(ans["entries"]):
+            yt = yt_dlp.YoutubeDL(
+                params={  # pyright: ignore[reportArgumentType]
+                    "extract_flat": "in_playlist",
+                    "simulate": True,
+                    "dump_single_json": True,
+                    "playlist_items": "0:5:1",
+                    "quiet": True,
+                    "cookiesfrombrowser": ("firefox",),
+                    "extractor_args": {
+                        "youtube": {
+                            "player_client": ["default", "web_safari"],
+                            "player_js_version": ["actual"],
+                        }
+                    },
+                }
+            )
+            ans = yt.extract_info(url=str(self.link))
+            for i, entry in enumerate(ans["entries"]):  # pyright: ignore[reportGeneralTypeIssues]
                 if entry["id"] == target_id:
-                    ans["entries"] = ans["entries"][0:i]
-                    self._info = ans
-                    if len(ans["entries"]) == 0:
+                    ans["entries"] = ans["entries"][0:i]  # pyright: ignore[reportGeneralTypeIssues]
+                    self._info = ans  # pyright: ignore[reportAttributeAccessIssue]
+                    if len(ans["entries"]) == 0:  # pyright: ignore[reportGeneralTypeIssues]
                         print(" nothing.")
-                    elif len(ans["entries"]) == 1:
+                    elif len(ans["entries"]) == 1:  # pyright: ignore[reportGeneralTypeIssues]
                         print(" 1 video found.")
                     else:
-                        print(f" {len(ans['entries'])} videos found.")
+                        print(f" {len(ans['entries'])} videos found.")  # pyright: ignore[reportGeneralTypeIssues]
                     return
 
-        yt = yt_dlp.YoutubeDL(params={
-            "extract_flat": 'in_playlist', "simulate": True, "dump_single_json": True, "quiet": True})
-        ans = yt.extract_info(url=self.link)
-        if ans["webpage_url_domain"] == 'piped.video':
-            ans = ans["entries"][0]
-        entries = ans["entries"]
+        yt = yt_dlp.YoutubeDL(
+            params={  # pyright: ignore[reportArgumentType]
+                "extract_flat": "in_playlist",
+                "simulate": True,
+                "dump_single_json": True,
+                "quiet": True,
+                "cookiesfrombrowser": ("firefox",),
+                "extractor_args": {
+                    "youtube": {
+                        "player_client": ["default", "web_safari"],
+                        "player_js_version": ["actual"],
+                    }
+                },
+            }
+        )
+        ans = yt.extract_info(url=str(self.link))
+        if ans["webpage_url_domain"] == "piped.video":  # pyright: ignore[reportGeneralTypeIssues]
+            ans = ans["entries"][0]  # pyright: ignore[reportGeneralTypeIssues]
+        entries = ans["entries"]  # pyright: ignore[reportGeneralTypeIssues]
         le = len(entries)
-        entries = entries[0:le - self._conf["last_download_index"]]
-        ans["entries"] = list(reversed(entries))
-        if len(ans["entries"]) == 0:
+        entries = entries[0 : le - self._conf["last_download_index"]]
+        ans["entries"] = list(reversed(entries))  # pyright: ignore[reportGeneralTypeIssues]
+        if len(ans["entries"]) == 0:  # pyright: ignore[reportGeneralTypeIssues]
             print(" nothing.")
-        elif len(ans["entries"]) == 1:
+        elif len(ans["entries"]) == 1:  # pyright: ignore[reportGeneralTypeIssues]
             print(" 1 video found.")
         else:
-            print(f" {len(ans['entries'])} videos found.")
+            print(f" {len(ans['entries'])} videos found.")  # pyright: ignore[reportGeneralTypeIssues]
 
-        self._info = ans
+        self._info = ans  # pyright: ignore[reportAttributeAccessIssue]
 
     @property
     def channel_name(self) -> str:
         self._get_new_links()
-        return self._info["channel"]
+        return self._info["channel"]  # pyright: ignore[reportOptionalSubscript]
 
     @property
     def channel_url(self) -> str:
         self._get_new_links()
-        return self._info["channel_url"]
+        return self._info["channel_url"]  # pyright: ignore[reportOptionalSubscript]
 
     @property
     def video_iterator(self) -> Iterator[IVideo]:
         self._get_new_links()
-        for i, entry in enumerate(self._info["entries"]):
+        for i, entry in enumerate(self._info["entries"]):  # pyright: ignore[reportOptionalSubscript]
             entry["my_index"] = i
             entry["my_title"] = self._conf["target_folder"]
             entry["max_height"] = self.max_height
@@ -114,20 +139,20 @@ class Videos(IVideos):
 
     def __getitem__(self, item: int) -> IVideo:
         self._get_new_links()
-        self._info["entries"][item]["my_index"] = item
-        self._info["entries"][item]["my_title"] = self._conf["target_folder"]
-        self._info["entries"][item]["max_height"] = self.max_height
-        vid = Video(self._info["entries"][item])
+        self._info["entries"][item]["my_index"] = item  # pyright: ignore[reportOptionalSubscript]
+        self._info["entries"][item]["my_title"] = self._conf["target_folder"]  # pyright: ignore[reportOptionalSubscript]
+        self._info["entries"][item]["max_height"] = self.max_height  # pyright: ignore[reportOptionalSubscript]
+        vid = Video(self._info["entries"][item])  # pyright: ignore[reportOptionalSubscript]
         return vid
 
     def __len__(self) -> int:
         self._get_new_links()
-        return len(self._info["entries"])
+        return len(self._info["entries"])  # pyright: ignore[reportOptionalSubscript]
 
     def write_links(self):
         self._get_new_links()
         self.make_folders()
-        last_index = self._conf["last_download_index"]
+        _ = self._conf["last_download_index"]  # noqa: F841
         for i in range(0, len(self)):
             entry = self[i]
             entry.write_json(self._cache_dir)

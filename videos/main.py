@@ -61,8 +61,10 @@ class Main:
     @property
     def videos_iterator(self) -> Iterator[Videos]:
         path = self.video_definition_dir
-        for file in path.glob('*.toml'):
-            yield Videos(file, cache_dir=self.link_queue_dir, prefix_dir=self.target_prefix)
+        for file in path.glob("*.toml"):
+            yield Videos(
+                file, cache_dir=self.link_queue_dir, prefix_dir=self.target_prefix
+            )
 
     def get_videos(self, filename: Path) -> Videos:
         vids = Videos(filename, self.link_queue_dir, prefix_dir=self._prefix)
@@ -72,7 +74,7 @@ class Main:
 def download(conf_file: str = "video_downloads.toml"):
     m = Main(conf_file)
     path = m.link_queue_dir
-    for json_file in path.glob('*.link'):
+    for json_file in path.glob("*.link"):
         download_link(json_file, m.target_prefix)
         # with open(json_file, 'rb') as f:
         #     json_entry = json.load(f)
@@ -82,8 +84,10 @@ def download(conf_file: str = "video_downloads.toml"):
         # Path(json_file).unlink()
 
 
-def download_link(json_file: Path, target_prefix: Path, symlink_dir: Path | None = None):
-    with open(str(json_file), 'rb') as f:
+def download_link(
+    json_file: Path, target_prefix: Path, symlink_dir: Path | None = None
+):
+    with open(str(json_file), "rb") as f:
         json_entry = json.load(f)
     vid = Video(json_entry)
     try:
@@ -91,7 +95,7 @@ def download_link(json_file: Path, target_prefix: Path, symlink_dir: Path | None
         print(f"Movie saved to {filename}")
         # if symlink_dir is not None:
         #     os.symlink(str(filename), f"{str(symlink_dir)}/vid.channel_name .target_folder), target_is_directory=True)
-    except yt_dlp.DownloadError as d:
+    except yt_dlp.DownloadError:  # pyright: ignore[reportAttributeAccessIssue]
         json_file.rename(json_file.with_suffix(".broken"))
     else:
         json_file.unlink()
@@ -103,6 +107,6 @@ def test():
         vids.write_links()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # test()
     download(conf_file="video_downloads.toml")

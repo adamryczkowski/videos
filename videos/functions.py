@@ -14,8 +14,8 @@ def install(package):
 def download_all(conf_file: Path | str = "video_downloads.toml"):
     m = Main(conf_file)
     path = m.link_queue_dir
-    for json_file in path.glob('*.link'):
-        with open(json_file, 'rb') as f:
+    for json_file in path.glob("*.link"):
+        with open(json_file, "rb") as f:
             json_entry = json.load(f)
         vid = Video(json_entry)
         assert str(m.link_queue_dir / vid.json_filename) == str(json_file)
@@ -30,5 +30,5 @@ def make_links(conf_file: Path | str = "video_downloads.toml"):
         vids.write_links()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     make_links()

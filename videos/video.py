@@ -11,8 +11,8 @@ class Video(IVideo):
     _parent: IVideos
 
     @staticmethod
-    def LoadFromJSON(json_path: Path):
-        with open(str(json_path), 'rb') as f:
+    def LoadFromJSON(json_path: Path):  # pyright: ignore[reportIncompatibleMethodOverride]
+        with open(str(json_path), "rb") as f:
             json_entry = json.load(f)
         vid = Video(json_entry)
         return vid
@@ -33,7 +33,7 @@ class Video(IVideo):
         return self._entry["duration"]
 
     @property
-    def id(self) -> float:
+    def id(self) -> str:
         return self._entry["id"]
 
     @property
@@ -62,25 +62,37 @@ class Video(IVideo):
 
     @property
     def json_filename(self) -> str:
-        strhash = self.id
+        strhash = str(self.id)
         file = strhash[:20] + ".link"
         return file
 
-    def download(self, dir: Path) -> Path | None:
+    def download(self, dir: Path) -> Path | None:  # pyright: ignore[reportIncompatibleMethodOverride]
         filename = ""
 
         def set_filename(d):
             nonlocal filename
             filename = d
 
-        ydl_opts = {'format': f"bestvideo[height<={self.max_height}][vcodec!~='vp0?9']+bestaudio/best",
-                    'outtmpl': {'default': f"{dir / self.channel_name}/%(upload_date)s %(title)s.%(ext)s"},
-                    'subtitleslangs': ['pl', 'en', 'ru'],
-                    'writedescription': True,
-                    'writesubtitles': True, 'writethumbnail': True,
-                    'progress_hooks': [set_filename]}
+        ydl_opts = {
+            "format": f"bestvideo[height<={self.max_height}][vcodec!~='vp0?9']+bestaudio/best",
+            "outtmpl": {
+                "default": f"{dir / self.channel_name}/%(upload_date)s %(title)s.%(ext)s"
+            },
+            "subtitleslangs": ["pl", "en", "ru"],
+            "writedescription": True,
+            "writesubtitles": True,
+            "writethumbnail": True,
+            "progress_hooks": [set_filename],
+            "cookiesfrombrowser": ("firefox",),
+            "extractor_args": {
+                "youtube": {
+                    "player_client": ["default", "web_safari"],
+                    "player_js_version": ["actual"],
+                }
+            },
+        }
 
-        yt = yt_dlp.YoutubeDL(params=ydl_opts)
+        yt = yt_dlp.YoutubeDL(params=ydl_opts)  # pyright: ignore[reportArgumentType]
         yt.download(self.url)
         if filename != "":
             return Path(filename["filename"])

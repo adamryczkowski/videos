@@ -9,13 +9,14 @@ from .main import download_link
 
 # Template from https://www.toptal.com/python/beginners-guide-to-concurrency-and-parallelism-in-python
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 
 logger = logging.getLogger(__name__)
 
 
 class DownloadWorker(Thread):
-
     def __init__(self, queue):
         Thread.__init__(self)
         self.queue = queue
@@ -34,7 +35,7 @@ def main(worker_count: int = 3, conf_file: Path | str = "video_downloads.toml"):
     m = Main(conf_file)
     path = m.link_queue_dir
     download_dir = m.target_prefix
-    links = [json_file for json_file in path.glob('*.json')]
+    links = [json_file for json_file in path.glob("*.json")]
 
     ts = time()
 
@@ -48,12 +49,12 @@ def main(worker_count: int = 3, conf_file: Path | str = "video_downloads.toml"):
         worker.start()
     # Put the tasks into the queue as a tuple
     for link in links:
-        logger.info('Queueing {}'.format(link))
+        logger.info("Queueing {}".format(link))
         queue.put((download_dir, link))
     # Causes the main thread to wait for the queue to finish processing all the tasks
     queue.join()
-    logging.info('Took %s', time() - ts)
+    logging.info("Took %s", time() - ts)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main(conf_file="video_downloads.toml")
