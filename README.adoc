@@ -89,20 +89,108 @@ download_st
 
 === Python API
 
+==== Core Classes
+
+===== Main
+
+The main entry point for downloading videos.
+
 [source,python]
 ----
-from videos import Main, Videos, Video
+from videos import Main
 
-# Initialize with configuration
+# Initialize with configuration file
 main = Main("video_downloads.toml")
 
 # Download all queued videos
-from videos.functions import download_all
-download_all("video_downloads.toml")
+main.download()
+----
 
-# Fetch links for processing
-from videos.functions import make_links
+===== Video
+
+Represents a single video to be downloaded.
+
+[source,python]
+----
+from videos import Video
+
+# Create from a dictionary
+video = Video({
+    "link": "https://youtube.com/watch?v=...",
+    "target_folder": "/path/to/videos",
+    "max_height": 1080,
+    "browser": "firefox",  # Optional: for cookie-based auth
+    "subtitle_languages": ["en", "pl"]  # Optional
+})
+
+# Access properties
+print(video.link)
+print(video.target_folder)
+print(video.max_height)
+print(video.browser)  # Defaults to "firefox"
+print(video.subtitle_languages)  # Defaults to ["pl", "en", "ru"]
+
+# Download the video
+video.download()
+----
+
+===== Videos
+
+Manages a collection of videos from a configuration file.
+
+[source,python]
+----
+from videos import Videos
+
+# Load videos from configuration
+videos = Videos("video_downloads.toml")
+
+# Iterate over videos
+for video in videos:
+    print(video.link)
+----
+
+==== Utility Functions
+
+[source,python]
+----
+from videos import download_all_sequential, make_links
+
+# Download all queued videos sequentially (single-threaded)
+download_all_sequential("video_downloads.toml")
+
+# Fetch links and create download queue
 make_links("video_downloads.toml")
+----
+
+==== Multi-threaded Downloads
+
+For concurrent downloads, use the threads module:
+
+[source,python]
+----
+from videos.threads import main as download_threaded
+
+# Download with default worker count (3 threads)
+download_threaded()
+
+# Or with custom worker count
+download_threaded(worker_count=5)
+----
+
+==== Configuration Constants
+
+The following constants are defined in `videos.common`:
+
+[source,python]
+----
+from videos.common import (
+    LINK_FILE_EXTENSION,        # ".link"
+    DEFAULT_MAX_HEIGHT,         # 1080
+    DEFAULT_WORKER_COUNT,       # 3
+    DEFAULT_SUBTITLE_LANGUAGES, # ["pl", "en", "ru"]
+    DEFAULT_BROWSER,            # "firefox"
+)
 ----
 
 == Project Structure
@@ -128,8 +216,8 @@ videos/
 
 == Dependencies
 
-* Python 3.8+
-* yt-dlp: Video downloading
+* Python 3.10+
+* yt-dlp: Video downloading with browser cookie support
 * toml: Configuration file parsing
 
 == Development
@@ -141,9 +229,25 @@ videos/
 poetry run pytest
 ----
 
+=== Code Quality
+
+[source,bash]
+----
+# Run all pre-commit hooks
+just validate
+
+# Run tests with coverage
+poetry run coverage run --source videos -m pytest
+poetry run coverage report -m
+----
+
 === Development Dependencies
 
-* pytest ^7.0
+* pytest ^8.3
+* pytest-mock ^3.14
+* coverage ^7.6
+* pre-commit ^4.0
+* pyright ^1.1
 
 == License
 
@@ -177,8 +281,14 @@ logging.basicConfig(level=logging.INFO)
 
 == Version History
 
-* 1.6.0: Bug fixes and documentation improvements
-* 1.5.3: Improved multi-threading support
+* 1.6.0: Code review improvements
+  ** Added comprehensive docstrings (Google-style)
+  ** Improved error handling with DownloadError
+  ** Added type safety with TypedDicts
+  ** Configurable browser and subtitle languages
+  ** Added interrogate for docstring coverage
+  ** Expanded test coverage
+* 1.5.3: Multi-threading support improvements
 
 NOTE: The version in `pyproject.toml` is the single source of truth for the package version.
 The `videos/_version.py` file should be kept in sync with it.
