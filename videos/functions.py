@@ -5,12 +5,17 @@ generating link queue files.
 """
 
 import json
+import logging
 import subprocess
 import sys
 from pathlib import Path
 
+from yt_dlp.utils import DownloadError
+
 from .main import Main
 from .video import Video
+
+logger = logging.getLogger(__name__)
 
 
 def install(package):
@@ -25,8 +30,8 @@ def install(package):
 def download_all(conf_file: Path | str = "video_downloads.toml"):
     """Download all queued videos sequentially (legacy function).
 
-    Note: This function does not handle errors gracefully. Consider using
-    the download function from main.py or the threaded version instead.
+    Handles download errors by renaming failed link files to .broken
+    extension instead of crashing.
 
     Args:
         conf_file: Path to the main configuration file.
@@ -38,8 +43,13 @@ def download_all(conf_file: Path | str = "video_downloads.toml"):
             json_entry = json.load(f)
         vid = Video(json_entry)
         assert str(m.link_queue_dir / vid.json_filename) == str(json_file)
-        vid.download(m.target_prefix)
-        Path(json_file).unlink()
+        try:
+            vid.download(m.target_prefix)
+        except DownloadError as e:
+            logger.error("Download failed for %s: %s", vid.title, e)
+            json_file.rename(json_file.with_suffix(".broken"))
+        else:
+            Path(json_file).unlink()
 
 
 def make_links(conf_file: Path | str = "video_downloads.toml"):

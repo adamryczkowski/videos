@@ -46,12 +46,19 @@ class DownloadWorker(Thread):
 
         Pulls (directory, link) tuples from the queue and downloads
         each video. Marks tasks as done regardless of success/failure.
+        Logs errors and skips missing files gracefully.
         """
         while True:
             # Get the work from the queue and expand the tuple
             directory, link = self.queue.get()
             try:
-                download_link(Path(link), directory)
+                link_path = Path(link)
+                if not link_path.exists():
+                    logger.warning("Link file no longer exists: %s", link)
+                    continue
+                download_link(link_path, directory)
+            except Exception as e:
+                logger.error("Failed to download %s: %s", link, e)
             finally:
                 self.queue.task_done()
 

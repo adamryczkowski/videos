@@ -130,11 +130,11 @@ class Video(IVideo):
             Path to the downloaded file, or None if filename not captured.
 
         Raises:
-            yt_dlp.DownloadError: If the download fails.
+            DownloadError: If the download fails.
         """
-        filename = ""
+        filename: dict | None = None
 
-        def set_filename(d):
+        def set_filename(d: dict) -> None:
             nonlocal filename
             filename = d
 
@@ -159,7 +159,6 @@ class Video(IVideo):
 
         yt = yt_dlp.YoutubeDL(params=ydl_opts)  # pyright: ignore[reportArgumentType]
         yt.download(self.url)
-        if filename != "":
+        if filename is not None and "filename" in filename:
             return Path(filename["filename"])
-        else:
-            return None
+        return None

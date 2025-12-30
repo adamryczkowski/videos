@@ -24,13 +24,23 @@ def load_config(conf_file: Path | str) -> dict:
     Returns:
         Configuration dictionary with defaults applied for
         max_height (1080) and last_download_index (0).
+
+    Raises:
+        ValueError: If required configuration keys are missing.
     """
     with open(str(conf_file), "rb") as f:
         data = tomllib.load(f)
-    if "max_height" not in data:
-        data["max_height"] = 1080
-    if "last_download_index" not in data:
-        data["last_download_index"] = 0
+
+    # Validate required keys for channel config
+    if "link" in data or "target_folder" in data:
+        required_keys = ["link", "target_folder"]
+        for key in required_keys:
+            if key not in data:
+                raise ValueError(f"Missing required configuration key: {key}")
+
+    # Apply defaults
+    data.setdefault("max_height", 1080)
+    data.setdefault("last_download_index", 0)
     return data
 
 

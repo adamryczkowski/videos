@@ -52,3 +52,9 @@ Thumbs.db
 test
 _channels
 video_downloads.toml
+
+# Reference repositories (cloned for research)
+ref/
+
+# Screenshots from browser automation
+screenshots/
