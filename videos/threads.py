@@ -35,7 +35,7 @@ def main(worker_count: int = 3, conf_file: Path | str = "video_downloads.toml"):
     m = Main(conf_file)
     path = m.link_queue_dir
     download_dir = m.target_prefix
-    links = [json_file for json_file in path.glob("*.json")]
+    links = [json_file for json_file in path.glob("*.link")]
 
     ts = time()
 
