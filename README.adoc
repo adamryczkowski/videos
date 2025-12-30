@@ -177,4 +177,8 @@ logging.basicConfig(level=logging.INFO)
 
 == Version History
 
-* 1.5.3: Current version with improved multi-threading support
+* 1.6.0: Bug fixes and documentation improvements
+* 1.5.3: Improved multi-threading support
+
+NOTE: The version in `pyproject.toml` is the single source of truth for the package version.
+The `videos/_version.py` file should be kept in sync with it.
