@@ -6,11 +6,13 @@ individual videos using yt-dlp.
 
 import json
 from pathlib import Path
+from typing import Any
 
 import yt_dlp
 
 from .common import LINK_FILE_EXTENSION
 from .ifaces import IVideo
+from .types import ProgressHookInfo
 
 
 class Video(IVideo):
@@ -23,7 +25,7 @@ class Video(IVideo):
         _entry: Dictionary containing video metadata from yt-dlp.
     """
 
-    _entry: dict
+    _entry: dict[str, Any]
 
     @staticmethod
     def load_from_json(json_path: Path) -> "Video":
@@ -42,7 +44,7 @@ class Video(IVideo):
     # Deprecated alias for backwards compatibility
     LoadFromJSON = load_from_json
 
-    def __init__(self, entry: dict):
+    def __init__(self, entry: dict[str, Any]):
         """Initialize a Video from metadata dictionary.
 
         Args:
@@ -113,7 +115,7 @@ class Video(IVideo):
         strhash = str(self.id)
         return strhash[:20] + LINK_FILE_EXTENSION
 
-    def download(self, dir: Path) -> Path | None:  # pyright: ignore[reportIncompatibleMethodOverride]
+    def download(self, dir: Path) -> Path | None:
         """Download the video using yt-dlp.
 
         Downloads the video with configured quality settings, subtitles,
@@ -128,9 +130,9 @@ class Video(IVideo):
         Raises:
             DownloadError: If the download fails.
         """
-        filename: dict | None = None
+        filename: ProgressHookInfo | None = None
 
-        def set_filename(d: dict) -> None:
+        def set_filename(d: ProgressHookInfo) -> None:
             nonlocal filename
             filename = d
 

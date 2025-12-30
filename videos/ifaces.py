@@ -69,7 +69,15 @@ class IVideo(ABC):
         pass
 
     @abstractmethod
-    def download(self, dir: Path):
+    def download(self, dir: Path) -> Path | None:
+        """Download the video to the specified directory.
+
+        Args:
+            dir: Target directory for the downloaded video.
+
+        Returns:
+            Path to the downloaded file, or None if filename not captured.
+        """
         pass
 
 

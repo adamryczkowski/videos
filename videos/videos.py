@@ -7,7 +7,7 @@ video playlists from YouTube and other sources using yt-dlp.
 import logging
 import tomllib
 from pathlib import Path
-from typing import Iterator
+from typing import Any, Iterator
 
 import toml
 import yt_dlp
@@ -19,7 +19,7 @@ from .video import Video
 logger = logging.getLogger(__name__)
 
 
-def load_config(conf_file: Path | str) -> dict:
+def load_config(conf_file: Path | str) -> dict[str, Any]:
     """Load and validate a TOML configuration file.
 
     Args:
@@ -62,9 +62,9 @@ class Videos(IVideos):
         _conf_file: Path to the channel configuration file.
     """
 
-    _conf: dict
+    _conf: dict[str, Any]
     _cache_dir: Path
-    _info: dict | None
+    _info: dict[str, Any] | None
     _prefix_dir: Path
     _conf_file: Path
 
