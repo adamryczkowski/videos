@@ -1,3 +1,11 @@
+"""Multi-threaded video download module.
+
+This module provides concurrent video downloading using a thread pool
+and work queue pattern.
+
+Template from https://www.toptal.com/python/beginners-guide-to-concurrency-and-parallelism-in-python
+"""
+
 import logging
 from pathlib import Path
 from queue import Queue
@@ -7,8 +15,6 @@ from time import time
 from .functions import Main  # setup_download_dir, get_links, download_link
 from .main import download_link
 
-# Template from https://www.toptal.com/python/beginners-guide-to-concurrency-and-parallelism-in-python
-
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
@@ -17,11 +23,30 @@ logger = logging.getLogger(__name__)
 
 
 class DownloadWorker(Thread):
+    """Worker thread for processing video downloads from a queue.
+
+    Runs as a daemon thread, continuously pulling download tasks
+    from the queue until the program exits.
+
+    Attributes:
+        queue: Queue containing (directory, link_path) tuples.
+    """
+
     def __init__(self, queue):
+        """Initialize the download worker.
+
+        Args:
+            queue: Queue to pull download tasks from.
+        """
         Thread.__init__(self)
         self.queue = queue
 
     def run(self):
+        """Process downloads from the queue indefinitely.
+
+        Pulls (directory, link) tuples from the queue and downloads
+        each video. Marks tasks as done regardless of success/failure.
+        """
         while True:
             # Get the work from the queue and expand the tuple
             directory, link = self.queue.get()
@@ -32,6 +57,15 @@ class DownloadWorker(Thread):
 
 
 def main(worker_count: int = 3, conf_file: Path | str = "video_downloads.toml"):
+    """Download all queued videos using multiple worker threads.
+
+    Creates a pool of daemon worker threads that process downloads
+    concurrently from a shared queue.
+
+    Args:
+        worker_count: Number of concurrent download workers. Defaults to 3.
+        conf_file: Path to the main configuration file.
+    """
     m = Main(conf_file)
     path = m.link_queue_dir
     download_dir = m.target_prefix
