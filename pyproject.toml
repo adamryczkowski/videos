@@ -33,6 +33,7 @@ pyright = "^1.1.405"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^8.3.0"
+pytest-mock = "^3.14.0"
 coverage = "^7.6.0"
 
 [tool.pyright]
@@ -57,3 +58,15 @@ branch = true
 show_missing = true
 skip_empty = true
 fail_under = 0
+
+[tool.interrogate]
+# Using Google-style docstrings - ignore-init-method is implicit
+ignore-module = false
+ignore-nested-functions = true
+ignore-nested-classes = true
+# Set to 0 for now; increase as docstrings are added
+# Target: 80% coverage
+fail-under = 0
+exclude = ["tests", "setup.py"]
+style = "google"
+verbose = 0
