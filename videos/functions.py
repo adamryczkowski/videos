@@ -27,8 +27,11 @@ def install(package):
     subprocess.check_call([sys.executable, "-m", "pip", "install", package])
 
 
-def download_all(conf_file: Path | str = "video_downloads.toml"):
+def download_all_sequential(conf_file: Path | str = "video_downloads.toml"):
     """Download all queued videos sequentially (legacy function).
+
+    This is the single-threaded version of video downloading.
+    For concurrent downloads, use videos.threads.main() instead.
 
     Handles download errors by renaming failed link files to .broken
     extension instead of crashing.

@@ -10,7 +10,11 @@ from typing import Any
 
 import yt_dlp
 
-from .common import LINK_FILE_EXTENSION
+from .common import (
+    DEFAULT_BROWSER,
+    DEFAULT_SUBTITLE_LANGUAGES,
+    LINK_FILE_EXTENSION,
+)
 from .ifaces import IVideo
 from .types import ProgressHookInfo
 
@@ -94,6 +98,24 @@ class Video(IVideo):
         """Get the video URL."""
         return self._entry["url"]
 
+    @property
+    def browser(self) -> str:
+        """Get the browser for cookie-based authentication.
+
+        Returns:
+            Browser name, defaults to DEFAULT_BROWSER.
+        """
+        return self._entry.get("browser", DEFAULT_BROWSER)
+
+    @property
+    def subtitle_languages(self) -> list[str]:
+        """Get the list of subtitle languages to download.
+
+        Returns:
+            List of language codes, defaults to DEFAULT_SUBTITLE_LANGUAGES.
+        """
+        return self._entry.get("subtitle_languages", DEFAULT_SUBTITLE_LANGUAGES)
+
     def write_json(self, cache_dir: Path):
         """Write video metadata to a JSON link file.
 
@@ -141,12 +163,12 @@ class Video(IVideo):
             "outtmpl": {
                 "default": f"{dir / self.channel_name}/%(upload_date)s %(title)s.%(ext)s"
             },
-            "subtitleslangs": ["pl", "en", "ru"],
+            "subtitleslangs": self.subtitle_languages,
             "writedescription": True,
             "writesubtitles": True,
             "writethumbnail": True,
             "progress_hooks": [set_filename],
-            "cookiesfrombrowser": ("firefox",),
+            "cookiesfrombrowser": (self.browser,),
             "extractor_args": {
                 "youtube": {
                     "player_client": ["default", "web_safari"],

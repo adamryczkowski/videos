@@ -88,7 +88,7 @@ def main(
 
     # Create a queue to communicate with the worker threads
     queue = Queue()
-    # Create 8 worker threads
+    # Create worker threads (default: DEFAULT_WORKER_COUNT)
     for x in range(worker_count):
         worker = DownloadWorker(queue)
         # Setting daemon to True will let the main thread exit even though the workers are blocking
