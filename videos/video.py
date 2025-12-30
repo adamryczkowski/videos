@@ -9,7 +9,8 @@ from pathlib import Path
 
 import yt_dlp
 
-from .ifaces import IVideos, IVideo
+from .common import LINK_FILE_EXTENSION
+from .ifaces import IVideo
 
 
 class Video(IVideo):
@@ -20,14 +21,12 @@ class Video(IVideo):
 
     Attributes:
         _entry: Dictionary containing video metadata from yt-dlp.
-        _parent: Reference to parent Videos collection (unused).
     """
 
     _entry: dict
-    _parent: IVideos
 
     @staticmethod
-    def LoadFromJSON(json_path: Path):  # pyright: ignore[reportIncompatibleMethodOverride]
+    def load_from_json(json_path: Path) -> "Video":
         """Load a Video instance from a JSON link file.
 
         Args:
@@ -38,8 +37,10 @@ class Video(IVideo):
         """
         with open(str(json_path), "rb") as f:
             json_entry = json.load(f)
-        vid = Video(json_entry)
-        return vid
+        return Video(json_entry)
+
+    # Deprecated alias for backwards compatibility
+    LoadFromJSON = load_from_json
 
     def __init__(self, entry: dict):
         """Initialize a Video from metadata dictionary.
@@ -54,10 +55,6 @@ class Video(IVideo):
     def index(self) -> int:
         """Get the video's index in the playlist."""
         return self._entry["my_index"]
-
-    # @property
-    # def entry_json_file(self) -> Path:
-    #     return self._path
 
     @property
     def duration(self) -> float:
@@ -114,8 +111,7 @@ class Video(IVideo):
             Filename based on first 20 chars of video ID with .link extension.
         """
         strhash = str(self.id)
-        file = strhash[:20] + ".link"
-        return file
+        return strhash[:20] + LINK_FILE_EXTENSION
 
     def download(self, dir: Path) -> Path | None:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Download the video using yt-dlp.

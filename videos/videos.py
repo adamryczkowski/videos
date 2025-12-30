@@ -4,6 +4,7 @@ This module provides the Videos class for fetching and managing
 video playlists from YouTube and other sources using yt-dlp.
 """
 
+import logging
 import tomllib
 from pathlib import Path
 from typing import Iterator
@@ -11,8 +12,11 @@ from typing import Iterator
 import toml
 import yt_dlp
 
+from .common import DEFAULT_MAX_HEIGHT
 from .ifaces import IVideo, IVideos
 from .video import Video
+
+logger = logging.getLogger(__name__)
 
 
 def load_config(conf_file: Path | str) -> dict:
@@ -39,7 +43,7 @@ def load_config(conf_file: Path | str) -> dict:
                 raise ValueError(f"Missing required configuration key: {key}")
 
     # Apply defaults
-    data.setdefault("max_height", 1080)
+    data.setdefault("max_height", DEFAULT_MAX_HEIGHT)
     data.setdefault("last_download_index", 0)
     return data
 
@@ -110,7 +114,7 @@ class Videos(IVideos):
         """
         if self._info is not None:
             return
-        print(f"Checking for new videos from {self._conf['target_folder']}...", end="")
+        logger.info("Checking for new videos from %s...", self._conf["target_folder"])
 
         if "last_video" in self._conf:
             target_id = self._conf["last_video"]
@@ -135,12 +139,13 @@ class Videos(IVideos):
                 if entry["id"] == target_id:
                     ans["entries"] = ans["entries"][0:i]  # pyright: ignore[reportGeneralTypeIssues]
                     self._info = ans  # pyright: ignore[reportAttributeAccessIssue]
-                    if len(ans["entries"]) == 0:  # pyright: ignore[reportGeneralTypeIssues]
-                        print(" nothing.")
-                    elif len(ans["entries"]) == 1:  # pyright: ignore[reportGeneralTypeIssues]
-                        print(" 1 video found.")
+                    num_entries = len(ans["entries"])  # pyright: ignore[reportGeneralTypeIssues]
+                    if num_entries == 0:
+                        logger.info("No new videos found.")
+                    elif num_entries == 1:
+                        logger.info("1 video found.")
                     else:
-                        print(f" {len(ans['entries'])} videos found.")  # pyright: ignore[reportGeneralTypeIssues]
+                        logger.info("%d videos found.", num_entries)
                     return
 
         yt = yt_dlp.YoutubeDL(
@@ -162,15 +167,16 @@ class Videos(IVideos):
         if ans["webpage_url_domain"] == "piped.video":  # pyright: ignore[reportGeneralTypeIssues]
             ans = ans["entries"][0]  # pyright: ignore[reportGeneralTypeIssues]
         entries = ans["entries"]  # pyright: ignore[reportGeneralTypeIssues]
-        le = len(entries)
-        entries = entries[0 : le - self._conf["last_download_index"]]
+        num_total = len(entries)
+        entries = entries[0 : num_total - self._conf["last_download_index"]]
         ans["entries"] = list(reversed(entries))  # pyright: ignore[reportGeneralTypeIssues]
-        if len(ans["entries"]) == 0:  # pyright: ignore[reportGeneralTypeIssues]
-            print(" nothing.")
-        elif len(ans["entries"]) == 1:  # pyright: ignore[reportGeneralTypeIssues]
-            print(" 1 video found.")
+        num_entries = len(ans["entries"])  # pyright: ignore[reportGeneralTypeIssues]
+        if num_entries == 0:
+            logger.info("No new videos found.")
+        elif num_entries == 1:
+            logger.info("1 video found.")
         else:
-            print(f" {len(ans['entries'])} videos found.")  # pyright: ignore[reportGeneralTypeIssues]
+            logger.info("%d videos found.", num_entries)
 
         self._info = ans  # pyright: ignore[reportAttributeAccessIssue]
 
@@ -231,16 +237,11 @@ class Videos(IVideos):
         """
         self._get_new_links()
         self.make_folders()
-        _ = self._conf["last_download_index"]  # noqa: F841
-        for i in range(0, len(self)):
+        for i in range(len(self)):
             entry = self[i]
             entry.write_json(self._cache_dir)
             self._conf["last_download_index"] = self._conf["last_download_index"] + 1
             self._conf["last_video"] = entry.id
-            print(f"New video from {entry.channel_name}: {entry.title}")
+            logger.info("New video from %s: %s", entry.channel_name, entry.title)
             with open(self._conf_file, "w") as toml_file:
                 toml.dump(self._conf, toml_file)
-
-        # self._info["last_download_index"] = len(self)
-        # with open(self._conf_file, "w") as toml_file:
-        #     toml.dump(self._info, toml_file)

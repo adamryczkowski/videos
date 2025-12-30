@@ -1,12 +1,32 @@
+"""Interface definitions for the videos package.
+
+This module defines abstract base classes that specify the contracts
+for Video and Videos implementations.
+"""
+
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Iterator
 
 
 class IVideo(ABC):
+    """Abstract base class for video implementations.
+
+    Defines the interface for video objects that can be downloaded
+    and serialized.
+    """
+
     @staticmethod
     @abstractmethod
-    def LoadFromJSON(json_path: Path):
+    def load_from_json(json_path: Path) -> "IVideo":
+        """Load a video from a JSON file.
+
+        Args:
+            json_path: Path to the JSON file.
+
+        Returns:
+            IVideo instance loaded from the file.
+        """
         pass
 
     @property

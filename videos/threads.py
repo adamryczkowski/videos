@@ -12,8 +12,9 @@ from queue import Queue
 from threading import Thread
 from time import time
 
-from .functions import Main  # setup_download_dir, get_links, download_link
-from .main import download_link
+# Import Main from main module (not functions) to avoid circular import
+from .main import Main, download_link
+from .common import LINK_FILE_EXTENSION, DEFAULT_WORKER_COUNT
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -63,20 +64,25 @@ class DownloadWorker(Thread):
                 self.queue.task_done()
 
 
-def main(worker_count: int = 3, conf_file: Path | str = "video_downloads.toml"):
+def main(
+    worker_count: int = DEFAULT_WORKER_COUNT,
+    conf_file: Path | str = "video_downloads.toml",
+):
     """Download all queued videos using multiple worker threads.
 
     Creates a pool of daemon worker threads that process downloads
-    concurrently from a shared queue.
+    concurrently from a shared queue. Workers run as daemon threads,
+    meaning they will be terminated when the main thread exits.
 
     Args:
-        worker_count: Number of concurrent download workers. Defaults to 3.
+        worker_count: Number of concurrent download workers.
+            Defaults to DEFAULT_WORKER_COUNT (3).
         conf_file: Path to the main configuration file.
     """
     m = Main(conf_file)
     path = m.link_queue_dir
     download_dir = m.target_prefix
-    links = [json_file for json_file in path.glob("*.link")]
+    links = list(path.glob(f"*{LINK_FILE_EXTENSION}"))
 
     ts = time()
 
