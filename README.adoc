@@ -8,11 +8,13 @@ A Python package for downloading videos using yt-dlp with multi-threading suppor
 == Features
 
 * Multi-threaded video downloads for improved performance
+* *Parallel link fetching* with cargo-style progress display
 * Queue-based download management with JSON link files
 * Configuration-driven setup via TOML files
 * Support for custom video quality settings
 * Channel-based organization of downloads
-* Progress tracking and logging
+* Progress tracking and logging with Rich library
+* Retry logic with exponential backoff for resilient fetching
 * Command-line interface with multiple entry points
 
 == Installation
@@ -52,11 +54,46 @@ target_dir = "/path/to/your/videos"
 
 === Command Line Interface
 
-The package provides three main command-line scripts:
+The package provides four main command-line scripts:
 
-==== Fetch Links
+==== Fetch Links (Parallel)
 
-Extract video links and create download queue:
+Extract video links from all channels in parallel with cargo-style progress display:
+
+[source,bash]
+----
+fetch_links_parallel
+----
+
+This is the recommended way to fetch links. It uses multiple worker threads for faster processing.
+
+Options:
+
+* `-w, --workers N`: Number of concurrent worker threads (default: 5)
+* `-q, --quiet`: Suppress progress output
+* `--max-retries N`: Maximum retry attempts per channel (default: 3)
+* `config`: Path to configuration file (default: video_downloads.toml)
+
+Examples:
+
+[source,bash]
+----
+# Use defaults (5 workers, progress display)
+fetch_links_parallel
+
+# Use 10 workers for faster processing
+fetch_links_parallel -w 10
+
+# Quiet mode for scripting
+fetch_links_parallel -q
+
+# Custom config file
+fetch_links_parallel /path/to/config.toml
+----
+
+==== Fetch Links (Sequential)
+
+Extract video links sequentially (legacy command):
 
 [source,bash]
 ----
@@ -66,7 +103,7 @@ fetch_links
 This command will:
 
 * Install yt-dlp if not present
-* Process video definitions
+* Process video definitions one at a time
 * Create `.link` files in the queue directory
 
 ==== Download All (Multi-threaded)
@@ -163,6 +200,33 @@ download_all_sequential("video_downloads.toml")
 make_links("video_downloads.toml")
 ----
 
+==== Parallel Link Fetching
+
+For concurrent link fetching with progress display:
+
+[source,python]
+----
+from videos.parallel_fetch import ParallelFetcher
+
+# Create fetcher with default settings (5 workers)
+fetcher = ParallelFetcher("video_downloads.toml")
+
+# Fetch links from all channels in parallel
+results = fetcher.fetch_all()
+
+# Get summary statistics
+summary = fetcher.get_summary()
+print(f"Processed {summary['total_channels']} channels in {summary['elapsed_time']:.1f}s")
+
+# Custom configuration
+fetcher = ParallelFetcher(
+    conf_file="video_downloads.toml",
+    worker_count=10,      # Use 10 workers
+    quiet=False,          # Show progress display
+    max_retries=5,        # Retry failed channels up to 5 times
+)
+----
+
 ==== Multi-threaded Downloads
 
 For concurrent downloads, use the threads module:
@@ -200,17 +264,19 @@ videos/
 ├── __init__.py          # Package initialization and exports
 ├── main.py              # Main application class
 ├── functions.py         # Core download and link processing functions
+├── parallel_fetch.py    # Parallel link fetching with progress display
 ├── threads.py           # Multi-threaded download workers
 ├── video.py             # Individual video handling
 ├── videos.py            # Video collection management
 ├── ifaces.py            # Interface definitions
+├── types.py             # Type definitions (TypedDicts)
 └── common.py            # Common utilities
 ----
 
 == How It Works
 
 . *Configuration*: Set up your directories in `video_downloads.toml`
-. *Link Generation*: Run `fetch_links` to create `.link` files for each video
+. *Link Generation*: Run `fetch_links_parallel` to create `.link` files for each video (parallel with progress display)
 . *Queue Processing*: Run `download_all` to process the queue with multiple threads
 . *Download*: Videos are downloaded to the target directory and organized
 
@@ -219,6 +285,7 @@ videos/
 * Python 3.10+
 * yt-dlp: Video downloading with browser cookie support
 * toml: Configuration file parsing
+* rich: Terminal progress display and formatting
 
 == Development
 
@@ -281,6 +348,14 @@ logging.basicConfig(level=logging.INFO)
 
 == Version History
 
+* 1.7.0: Parallel link fetching
+  ** Added `fetch_links_parallel` command with cargo-style progress display
+  ** Parallel processing with configurable worker count (default: 5)
+  ** Rich-based progress bars with spinner, percentage, M/N count, elapsed/remaining time
+  ** Retry logic with exponential backoff for resilient fetching
+  ** Per-channel error handling - continues processing on failure
+  ** Graceful shutdown support
+  ** 42 new tests for parallel fetching functionality
 * 1.6.0: Code review improvements
   ** Added comprehensive docstrings (Google-style)
   ** Improved error handling with DownloadError

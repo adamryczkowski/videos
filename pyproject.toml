@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [project]
 name = "videos"
-version = "1.6.0"
+version = "1.7.0"
 description = "A Python package for downloading videos using yt-dlp with multi-threading support"
 readme = "README.adoc"
 requires-python = ">= 3.10"

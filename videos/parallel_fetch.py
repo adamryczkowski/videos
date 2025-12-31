@@ -140,6 +140,7 @@ class ParallelFetcher:
             console=self.console,
             expand=True,
             disable=self.quiet,
+            transient=True,  # Progress bar disappears after completion
         )
 
     def _process_channel(
@@ -276,39 +277,50 @@ class ParallelFetcher:
                     result = future.result()
                     results.append(result)
         else:
-            # Execute with progress display
-            with self.create_progress() as progress:
-                # Add overall progress task
-                overall_task = progress.add_task(
-                    "[green]Fetching video links...",
-                    total=len(channel_configs),
-                )
+            # Suppress logging during progress display to avoid screen clutter
+            # Save current logging levels and set to WARNING
+            videos_logger = logging.getLogger("videos")
+            original_level = videos_logger.level
+            videos_logger.setLevel(logging.WARNING)
 
-                with ThreadPoolExecutor(max_workers=self.worker_count) as executor:
-                    futures = {
-                        executor.submit(
-                            self._process_channel, config, progress, None
-                        ): config
-                        for config in channel_configs
-                    }
+            try:
+                # Execute with progress display
+                with self.create_progress() as progress:
+                    # Add overall progress task
+                    overall_task = progress.add_task(
+                        "[green]Fetching video links...",
+                        total=len(channel_configs),
+                    )
 
-                    for future in as_completed(futures):
-                        result = future.result()
-                        results.append(result)
+                    with ThreadPoolExecutor(max_workers=self.worker_count) as executor:
+                        futures = {
+                            executor.submit(
+                                self._process_channel, config, progress, None
+                            ): config
+                            for config in channel_configs
+                        }
 
-                        # Update overall progress
-                        progress.advance(overall_task)
+                        for future in as_completed(futures):
+                            result = future.result()
+                            results.append(result)
 
-                        # Log completion
-                        if result.success:
-                            progress.console.print(
-                                f"[green]✓[/green] {result.channel_name}: "
-                                f"{result.new_videos} new videos"
-                            )
-                        else:
-                            progress.console.print(
-                                f"[red]✗[/red] {result.channel_name}: {result.error}"
-                            )
+                            # Update overall progress
+                            progress.advance(overall_task)
+
+                            # Log completion above the progress bar using progress.print()
+                            # This properly handles printing above the live progress display
+                            if result.success:
+                                progress.print(
+                                    f"[green]✓[/green] {result.channel_name}: "
+                                    f"{result.new_videos} new videos"
+                                )
+                            else:
+                                progress.print(
+                                    f"[red]✗[/red] {result.channel_name}: {result.error}"
+                                )
+            finally:
+                # Restore original logging level
+                videos_logger.setLevel(original_level)
 
         # Record elapsed time
         self._elapsed_time = time.monotonic() - self._start_time
