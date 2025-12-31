@@ -18,6 +18,7 @@ Homepage = "https://example.com"
 download_all = "videos.threads:main"
 download_st = "videos.main:download"
 fetch_links = "videos.functions:make_links"
+fetch_links_parallel = "videos.parallel_fetch:cli_main"
 
 [tool.poetry]
 packages = [{ include = "videos" }]
