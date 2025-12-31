@@ -15,6 +15,11 @@ from yt_dlp.utils import DownloadError
 from .main import Main
 from .video import Video
 
+# Configure logging for CLI entry points
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+
 logger = logging.getLogger(__name__)
 
 

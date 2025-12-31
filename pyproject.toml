@@ -26,6 +26,7 @@ packages = [{ include = "videos" }]
 python = "^3.10"
 yt-dlp = {version = "^2025.6.30", extras = ["default"]}
 toml = "^0.10.2"
+rich = "^14.0.0"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^4.0.1"
