@@ -12,6 +12,10 @@ import yt_dlp
 
 from .common import (
     DEFAULT_BROWSER,
+    DEFAULT_FFMPEG_ARGS,
+    DEFAULT_MAX_SLEEP_INTERVAL,
+    DEFAULT_MIN_SLEEP_INTERVAL,
+    DEFAULT_PLAYER_CLIENTS,
     DEFAULT_SUBTITLE_LANGUAGES,
     LINK_FILE_EXTENSION,
 )
@@ -169,12 +173,20 @@ class Video(IVideo):
             "writethumbnail": True,
             "progress_hooks": [set_filename],
             "cookiesfrombrowser": (self.browser,),
+            # Updated extractor_args for 2026 YouTube changes
+            # android_sdkless is deprecated and must be excluded
             "extractor_args": {
                 "youtube": {
-                    "player_client": ["default", "web_safari"],
-                    "player_js_version": ["actual"],
+                    "player_client": DEFAULT_PLAYER_CLIENTS,
                 }
             },
+            # FFmpeg reconnect args for network resilience
+            "downloader_args": {
+                "ffmpeg_i": DEFAULT_FFMPEG_ARGS,
+            },
+            # Sleep intervals to avoid rate limiting
+            "sleep_interval": DEFAULT_MIN_SLEEP_INTERVAL,
+            "max_sleep_interval": DEFAULT_MAX_SLEEP_INTERVAL,
         }
 
         yt = yt_dlp.YoutubeDL(params=ydl_opts)  # pyright: ignore[reportArgumentType]

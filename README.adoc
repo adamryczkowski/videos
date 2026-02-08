@@ -249,13 +249,20 @@ The following constants are defined in `videos.common`:
 [source,python]
 ----
 from videos.common import (
-    LINK_FILE_EXTENSION,        # ".link"
-    DEFAULT_MAX_HEIGHT,         # 1080
-    DEFAULT_WORKER_COUNT,       # 3
-    DEFAULT_SUBTITLE_LANGUAGES, # ["pl", "en", "ru"]
-    DEFAULT_BROWSER,            # "firefox"
+    LINK_FILE_EXTENSION,          # ".link"
+    DEFAULT_MAX_HEIGHT,           # 1080
+    DEFAULT_WORKER_COUNT,         # 3
+    DEFAULT_SUBTITLE_LANGUAGES,   # ["pl", "en", "ru"]
+    DEFAULT_BROWSER,              # "firefox"
+    DEFAULT_PLAYER_CLIENTS,       # ["default", "-android_sdkless"]
+    DEFAULT_FFMPEG_ARGS,          # FFmpeg reconnect arguments
+    DEFAULT_MIN_SLEEP_INTERVAL,   # 1 second
+    DEFAULT_MAX_SLEEP_INTERVAL,   # 5 seconds
 )
 ----
+
+NOTE: The `DEFAULT_PLAYER_CLIENTS` excludes `android_sdkless` which was deprecated by YouTube in 2026.
+The `DEFAULT_FFMPEG_ARGS` includes reconnect settings for network resilience.
 
 == Project Structure
 
@@ -282,10 +289,48 @@ videos/
 
 == Dependencies
 
-* Python 3.10+
+=== Runtime Dependencies
+
+* *Python 3.10+*: Required by yt-dlp since version 2025.10.22
+* *Deno 2.0+*: *REQUIRED* for YouTube signature extraction since yt-dlp 2025.11.12
+* *Firefox*: Recommended browser for cookie-based authentication (default)
+* *FFmpeg*: Required for merging video/audio streams and post-processing
+
+=== Python Dependencies
+
 * yt-dlp: Video downloading with browser cookie support
 * toml: Configuration file parsing
 * rich: Terminal progress display and formatting
+
+=== Installing Deno
+
+Deno is required for yt-dlp to solve YouTube's JavaScript challenges. Without it, downloads will fail with 403 Forbidden errors.
+
+[source,bash]
+----
+# Linux/macOS
+curl -fsSL https://deno.land/install.sh | sh
+
+# Windows (PowerShell)
+irm https://deno.land/install.ps1 | iex
+
+# Or using package managers
+# Ubuntu/Debian (via Spack - see spack.yaml)
+just setup  # Automatically installs Deno via Spack
+
+# macOS
+brew install deno
+
+# Windows
+winget install DenoLand.Deno
+----
+
+Verify installation:
+
+[source,bash]
+----
+deno --version
+----
 
 == Development
 
@@ -332,9 +377,72 @@ This project is developed by Adam Ryczkowski.
 
 === Common Issues
 
-* *Permission errors*: Ensure the target directories are writable
-* *yt-dlp not found*: The `fetch_links` command automatically installs yt-dlp
-* *Configuration errors*: Verify your `video_downloads.toml` file paths exist
+==== 403 Forbidden Errors
+
+If you see `HTTP Error 403: Forbidden` or similar errors:
+
+1. *Ensure Deno is installed and in PATH*: yt-dlp requires Deno for YouTube signature extraction since version 2025.11.12
++
+[source,bash]
+----
+deno --version
+----
+
+2. *Update yt-dlp to the latest version*:
++
+[source,bash]
+----
+pip install --upgrade yt-dlp
+# Or with poetry
+poetry update yt-dlp
+----
+
+3. *Check if cookies are working*: Firefox cookies are recommended
++
+[source,bash]
+----
+# Test with yt-dlp directly
+yt-dlp --cookies-from-browser firefox "https://www.youtube.com/watch?v=VIDEO_ID"
+----
+
+4. *YouTube SABR blocking*: As of 2026, YouTube uses Server-Based Adaptive Bit Rate (SABR) to block downloaders. The package is configured to handle this, but you may need to:
+   - Use combined formats instead of separate audio/video streams
+   - Add sleep intervals between downloads to avoid rate limiting
+   - Use a VPN if your IP is blocked
+
+==== "Sign in to confirm you're not a bot" Errors
+
+This indicates YouTube requires authentication:
+
+1. Ensure Firefox is installed and you're logged into YouTube
+2. Close Firefox before running downloads (cookie database may be locked)
+3. Try exporting cookies manually using a browser extension
+
+==== Network Errors / Incomplete Downloads
+
+The package includes FFmpeg reconnect arguments for network resilience. If downloads still fail:
+
+1. Check your internet connection
+2. Try reducing the number of concurrent workers
+3. Increase sleep intervals in configuration
+
+==== Permission Errors
+
+* Ensure the target directories are writable
+* Check that the Spack environment is activated if using Spack-managed dependencies
+
+==== yt-dlp Not Found
+
+The `fetch_links` command automatically installs yt-dlp. If issues persist:
+
+[source,bash]
+----
+pip install yt-dlp
+----
+
+==== Configuration Errors
+
+Verify your `video_downloads.toml` file paths exist and are accessible.
 
 === Logging
 
@@ -344,6 +452,21 @@ The application uses Python's logging module. To see detailed output:
 ----
 import logging
 logging.basicConfig(level=logging.INFO)
+----
+
+=== Debugging Downloads
+
+For verbose output when troubleshooting:
+
+[source,bash]
+----
+# Run with debug logging
+python -c "
+import logging
+logging.basicConfig(level=logging.DEBUG)
+from videos.main import download
+download()
+"
 ----
 
 == Version History

@@ -18,3 +18,23 @@ DEFAULT_SUBTITLE_LANGUAGES = ["pl", "en", "ru"]
 
 # Default browser for cookie-based authentication
 DEFAULT_BROWSER = "firefox"
+
+# Default YouTube player clients for extractor_args
+# As of 2026, android_sdkless is deprecated and must be excluded
+# See: https://github.com/yt-dlp/yt-dlp/issues/15012
+DEFAULT_PLAYER_CLIENTS = ["default", "-android_sdkless"]
+
+# Default FFmpeg downloader arguments for network resilience
+# These help recover from network interruptions during downloads
+DEFAULT_FFMPEG_ARGS = [
+    "-reconnect",
+    "1",
+    "-reconnect_streamed",
+    "1",
+    "-reconnect_delay_max",
+    "5",
+]
+
+# Default sleep intervals to avoid rate limiting (in seconds)
+DEFAULT_MIN_SLEEP_INTERVAL = 1
+DEFAULT_MAX_SLEEP_INTERVAL = 5

@@ -5,13 +5,22 @@ download functions for processing link queue files.
 """
 
 import json
+import logging
 from pathlib import Path
 from typing import Iterator
+from urllib.error import HTTPError
 
 import yt_dlp
 
 from .video import Video
 from .videos import load_config, Videos
+
+# Configure logging for CLI entry points
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+
+logger = logging.getLogger(__name__)
 
 
 class Main:
@@ -162,6 +171,10 @@ def download_link(
     and removes the link file on success. On failure, renames the file
     with a .broken extension.
 
+    Handles specific error types:
+    - 403 Forbidden: Often due to YouTube's SABR blocking or missing cookies
+    - Network errors: Logged with details for debugging
+
     Args:
         json_file: Path to the .link file containing video metadata.
         target_prefix: Directory prefix for the downloaded video.
@@ -170,15 +183,47 @@ def download_link(
     with open(str(json_file), "rb") as f:
         json_entry = json.load(f)
     vid = Video(json_entry)
+    logger.info("Starting download: %s", vid.title)
     try:
         filename = vid.download(target_prefix)
-        print(f"Movie saved to {filename}")
-        # if symlink_dir is not None:
-        #     os.symlink(str(filename), f"{str(symlink_dir)}/vid.channel_name .target_folder), target_is_directory=True)
-    except yt_dlp.DownloadError:  # pyright: ignore[reportAttributeAccessIssue]
+        logger.info("Movie saved to %s", filename)
+    except yt_dlp.DownloadError as e:  # pyright: ignore[reportAttributeAccessIssue]
+        error_msg = str(e)
+        # Check for specific error types to provide better diagnostics
+        if "403" in error_msg or "Forbidden" in error_msg:
+            logger.error(
+                "Download failed for '%s' with 403 Forbidden. "
+                "This is likely due to YouTube's SABR blocking. "
+                "Ensure Deno is installed and in PATH, and try updating yt-dlp. "
+                "Error: %s",
+                vid.title,
+                error_msg,
+            )
+        elif "Sign in" in error_msg or "bot" in error_msg.lower():
+            logger.error(
+                "Download failed for '%s': YouTube requires sign-in. "
+                "Ensure cookies are properly configured from Firefox. "
+                "Error: %s",
+                vid.title,
+                error_msg,
+            )
+        else:
+            logger.error("Download failed for '%s': %s", vid.title, error_msg)
+        json_file.rename(json_file.with_suffix(".broken"))
+    except HTTPError as e:
+        logger.error(
+            "HTTP error downloading '%s': %s %s",
+            vid.title,
+            e.code,
+            e.reason,
+        )
+        json_file.rename(json_file.with_suffix(".broken"))
+    except Exception as e:
+        logger.exception("Unexpected error downloading '%s': %s", vid.title, e)
         json_file.rename(json_file.with_suffix(".broken"))
     else:
         json_file.unlink()
+        logger.info("Successfully completed download: %s", vid.title)
 
 
 def test():

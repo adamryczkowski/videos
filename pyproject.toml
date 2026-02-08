@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [project]
 name = "videos"
-version = "1.7.0"
+version = "1.8.0"
 description = "A Python package for downloading videos using yt-dlp with multi-threading support"
 readme = "README.adoc"
 requires-python = ">= 3.10"
@@ -25,7 +25,7 @@ packages = [{ include = "videos" }]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-yt-dlp = {version = "^2025.6.30", extras = ["default"]}
+yt-dlp = {version = "^2026.2.4", extras = ["default"]}
 toml = "^0.10.2"
 rich = "^14.0.0"
 

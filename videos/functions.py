@@ -39,7 +39,9 @@ def download_all_sequential(conf_file: Path | str = "video_downloads.toml"):
     For concurrent downloads, use videos.threads.main() instead.
 
     Handles download errors by renaming failed link files to .broken
-    extension instead of crashing.
+    extension instead of crashing. Provides detailed error diagnostics
+    for common issues like 403 Forbidden (SABR blocking) and sign-in
+    requirements.
 
     Args:
         conf_file: Path to the main configuration file.
@@ -51,13 +53,39 @@ def download_all_sequential(conf_file: Path | str = "video_downloads.toml"):
             json_entry = json.load(f)
         vid = Video(json_entry)
         assert str(m.link_queue_dir / vid.json_filename) == str(json_file)
+        logger.info("Starting download: %s", vid.title)
         try:
-            vid.download(m.target_prefix)
+            filename = vid.download(m.target_prefix)
+            logger.info("Movie saved to %s", filename)
         except DownloadError as e:
-            logger.error("Download failed for %s: %s", vid.title, e)
+            error_msg = str(e)
+            # Check for specific error types to provide better diagnostics
+            if "403" in error_msg or "Forbidden" in error_msg:
+                logger.error(
+                    "Download failed for '%s' with 403 Forbidden. "
+                    "This is likely due to YouTube's SABR blocking. "
+                    "Ensure Deno is installed and in PATH, and try updating yt-dlp. "
+                    "Error: %s",
+                    vid.title,
+                    error_msg,
+                )
+            elif "Sign in" in error_msg or "bot" in error_msg.lower():
+                logger.error(
+                    "Download failed for '%s': YouTube requires sign-in. "
+                    "Ensure cookies are properly configured from Firefox. "
+                    "Error: %s",
+                    vid.title,
+                    error_msg,
+                )
+            else:
+                logger.error("Download failed for '%s': %s", vid.title, error_msg)
+            json_file.rename(json_file.with_suffix(".broken"))
+        except Exception as e:
+            logger.exception("Unexpected error downloading '%s': %s", vid.title, e)
             json_file.rename(json_file.with_suffix(".broken"))
         else:
             Path(json_file).unlink()
+            logger.info("Successfully completed download: %s", vid.title)
 
 
 def make_links(conf_file: Path | str = "video_downloads.toml"):
