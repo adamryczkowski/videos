@@ -131,6 +131,65 @@ class TestVideoWriteJson:
         assert loaded["title"] == "Write Test"
 
 
+class TestVideoCookies:
+    """Tests for cookie configuration on Video."""
+
+    def test_cookies_file_default_none(self):
+        entry = {"id": "abc", "title": "T", "url": "u", "duration": 1.0}
+        video = Video(entry)
+        assert video.cookies_file is None
+
+    def test_cookies_file_from_entry(self):
+        entry = {
+            "id": "abc",
+            "title": "T",
+            "url": "u",
+            "duration": 1.0,
+            "cookies_file": "/path/to/cookies.txt",
+        }
+        video = Video(entry)
+        assert video.cookies_file == "/path/to/cookies.txt"
+
+    @patch("videos.video.yt_dlp.YoutubeDL")
+    def test_download_uses_cookiefile_when_set(
+        self, mock_ytdl_class: MagicMock, tmp_path: Path
+    ):
+        entry = {
+            "id": "dl_cookie",
+            "title": "Cookie Test",
+            "url": "https://example.com",
+            "duration": 60.0,
+            "my_title": "Test",
+            "cookies_file": "/tmp/cookies.txt",
+        }
+        video = Video(entry)
+        mock_ytdl_class.return_value = MagicMock()
+        video.download(tmp_path)
+
+        params = mock_ytdl_class.call_args[1]["params"]
+        assert params["cookiefile"] == "/tmp/cookies.txt"
+        assert "cookiesfrombrowser" not in params
+
+    @patch("videos.video.yt_dlp.YoutubeDL")
+    def test_download_uses_browser_when_no_cookiefile(
+        self, mock_ytdl_class: MagicMock, tmp_path: Path
+    ):
+        entry = {
+            "id": "dl_browser",
+            "title": "Browser Test",
+            "url": "https://example.com",
+            "duration": 60.0,
+            "my_title": "Test",
+        }
+        video = Video(entry)
+        mock_ytdl_class.return_value = MagicMock()
+        video.download(tmp_path)
+
+        params = mock_ytdl_class.call_args[1]["params"]
+        assert "cookiesfrombrowser" in params
+        assert "cookiefile" not in params
+
+
 class TestVideoDownload:
     """Tests for Video.download method."""
 

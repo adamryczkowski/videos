@@ -4,6 +4,8 @@ This module contains shared constants used across the package to ensure
 consistency and avoid magic values.
 """
 
+from typing import Any
+
 # File extension for video link queue files
 LINK_FILE_EXTENSION = ".link"
 
@@ -38,3 +40,21 @@ DEFAULT_FFMPEG_ARGS = [
 # Default sleep intervals to avoid rate limiting (in seconds)
 DEFAULT_MIN_SLEEP_INTERVAL = 1
 DEFAULT_MAX_SLEEP_INTERVAL = 5
+
+
+def build_cookie_opts(
+    cookies_file: str | None = None, browser: str = DEFAULT_BROWSER
+) -> dict[str, Any]:
+    """Build yt-dlp cookie authentication options.
+
+    Args:
+        cookies_file: Path to a Netscape-format cookies file.
+            Takes priority over browser extraction when set.
+        browser: Browser name for cookie extraction fallback.
+
+    Returns:
+        Dict with either 'cookiefile' or 'cookiesfrombrowser' key.
+    """
+    if cookies_file:
+        return {"cookiefile": cookies_file}
+    return {"cookiesfrombrowser": (browser,)}

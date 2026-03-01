@@ -12,7 +12,7 @@ from typing import Any, Iterator
 import toml
 import yt_dlp
 
-from .common import DEFAULT_MAX_HEIGHT
+from .common import DEFAULT_MAX_HEIGHT, build_cookie_opts
 from .ifaces import IVideo, IVideos
 from .video import Video
 
@@ -67,8 +67,15 @@ class Videos(IVideos):
     _info: dict[str, Any] | None
     _prefix_dir: Path
     _conf_file: Path
+    _cookies_file: str | None
 
-    def __init__(self, conf_file: Path, cache_dir: Path, prefix_dir: Path):
+    def __init__(
+        self,
+        conf_file: Path,
+        cache_dir: Path,
+        prefix_dir: Path,
+        cookies_file: str | None = None,
+    ):
         """Initialize a Videos collection.
 
         Args:
@@ -81,6 +88,7 @@ class Videos(IVideos):
         self._cache_dir = cache_dir
         self._info = None
         self._prefix_dir = prefix_dir
+        self._cookies_file = cookies_file
         self.make_folders()
 
     @property
@@ -125,7 +133,7 @@ class Videos(IVideos):
                     "dump_single_json": True,
                     "playlist_items": "0:5:1",
                     "quiet": True,
-                    "cookiesfrombrowser": ("firefox",),
+                    **build_cookie_opts(self._cookies_file),
                     "extractor_args": {
                         "youtube": {
                             "player_client": ["default", "web_safari"],
@@ -154,7 +162,7 @@ class Videos(IVideos):
                 "simulate": True,
                 "dump_single_json": True,
                 "quiet": True,
-                "cookiesfrombrowser": ("firefox",),
+                **build_cookie_opts(self._cookies_file),
                 "extractor_args": {
                     "youtube": {
                         "player_client": ["default", "web_safari"],
@@ -204,6 +212,8 @@ class Videos(IVideos):
             entry["my_index"] = i
             entry["my_title"] = self._conf["target_folder"]
             entry["max_height"] = self.max_height
+            if self._cookies_file:
+                entry["cookies_file"] = self._cookies_file
             vid = Video(entry)
             yield vid
 
@@ -220,6 +230,8 @@ class Videos(IVideos):
         self._info["entries"][item]["my_index"] = item  # pyright: ignore[reportOptionalSubscript]
         self._info["entries"][item]["my_title"] = self._conf["target_folder"]  # pyright: ignore[reportOptionalSubscript]
         self._info["entries"][item]["max_height"] = self.max_height  # pyright: ignore[reportOptionalSubscript]
+        if self._cookies_file:
+            self._info["entries"][item]["cookies_file"] = self._cookies_file  # pyright: ignore[reportOptionalSubscript]
         vid = Video(self._info["entries"][item])  # pyright: ignore[reportOptionalSubscript]
         return vid
 

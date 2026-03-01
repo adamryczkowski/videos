@@ -117,6 +117,11 @@ class Main:
         return path
 
     @property
+    def cookies_file(self) -> str | None:
+        """Get the optional cookie file path for authentication."""
+        return self._conf.get("cookies_file")
+
+    @property
     def videos_iterator(self) -> Iterator[Videos]:
         """Iterate over all video channel definitions.
 
@@ -126,7 +131,10 @@ class Main:
         path = self.video_definition_dir
         for file in path.glob("*.toml"):
             yield Videos(
-                file, cache_dir=self.link_queue_dir, prefix_dir=self.target_prefix
+                file,
+                cache_dir=self.link_queue_dir,
+                prefix_dir=self.target_prefix,
+                cookies_file=self.cookies_file,
             )
 
     def get_videos(self, filename: Path) -> Videos:
@@ -138,7 +146,12 @@ class Main:
         Returns:
             Videos object for the specified channel.
         """
-        vids = Videos(filename, self.link_queue_dir, prefix_dir=self._prefix)
+        vids = Videos(
+            filename,
+            self.link_queue_dir,
+            prefix_dir=self._prefix,
+            cookies_file=self.cookies_file,
+        )
         return vids
 
 

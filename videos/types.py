@@ -30,6 +30,7 @@ class VideoEntry(TypedDict):
     my_index: NotRequired[int]
     my_title: NotRequired[str]
     max_height: NotRequired[int]
+    cookies_file: NotRequired[str]
 
 
 class PlaylistInfo(TypedDict):

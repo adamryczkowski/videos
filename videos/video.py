@@ -18,6 +18,7 @@ from .common import (
     DEFAULT_PLAYER_CLIENTS,
     DEFAULT_SUBTITLE_LANGUAGES,
     LINK_FILE_EXTENSION,
+    build_cookie_opts,
 )
 from .ifaces import IVideo
 from .types import ProgressHookInfo
@@ -112,6 +113,15 @@ class Video(IVideo):
         return self._entry.get("browser", DEFAULT_BROWSER)
 
     @property
+    def cookies_file(self) -> str | None:
+        """Get the cookie file path for authentication.
+
+        Returns:
+            Path to cookies file, or None to use browser extraction.
+        """
+        return self._entry.get("cookies_file")
+
+    @property
     def subtitle_languages(self) -> list[str]:
         """Get the list of subtitle languages to download.
 
@@ -172,7 +182,7 @@ class Video(IVideo):
             "writesubtitles": True,
             "writethumbnail": True,
             "progress_hooks": [set_filename],
-            "cookiesfrombrowser": (self.browser,),
+            **build_cookie_opts(self.cookies_file, self.browser),
             # Updated extractor_args for 2026 YouTube changes
             # android_sdkless is deprecated and must be excluded
             "extractor_args": {

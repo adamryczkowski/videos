@@ -174,6 +174,7 @@ class ParallelFetcher:
                     config_file,
                     cache_dir=self.main.link_queue_dir,
                     prefix_dir=self.main.target_prefix,
+                    cookies_file=self.main.cookies_file,
                 )
 
                 # Get channel name from config if available
