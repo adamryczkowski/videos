@@ -5,23 +5,29 @@ individual videos using yt-dlp.
 """
 
 import json
+import logging
 from pathlib import Path
 from typing import Any
 
 import yt_dlp
 
 from .common import (
+    AGE_RESTRICTED_PLAYER_CLIENTS,
     DEFAULT_BROWSER,
     DEFAULT_FFMPEG_ARGS,
     DEFAULT_MAX_SLEEP_INTERVAL,
+    DEFAULT_JS_RUNTIMES,
     DEFAULT_MIN_SLEEP_INTERVAL,
     DEFAULT_PLAYER_CLIENTS,
+    DEFAULT_REMOTE_COMPONENTS,
     DEFAULT_SUBTITLE_LANGUAGES,
     LINK_FILE_EXTENSION,
     build_cookie_opts,
 )
 from .ifaces import IVideo
 from .types import ProgressHookInfo
+
+logger = logging.getLogger(__name__)
 
 
 class Video(IVideo):
@@ -151,11 +157,58 @@ class Video(IVideo):
         strhash = str(self.id)
         return strhash[:20] + LINK_FILE_EXTENSION
 
+    def _build_ydl_opts(
+        self, dir: Path, set_filename, player_clients: list[str] | None = None
+    ) -> dict[str, Any]:
+        """Build yt-dlp options dict.
+
+        Args:
+            dir: Target directory for the downloaded video.
+            set_filename: Progress hook callback.
+            player_clients: Override player client list.
+        """
+        return {
+            "format": f"bestvideo[height<={self.max_height}][vcodec!~='vp0?9']+bestaudio/best",
+            "outtmpl": {
+                "default": f"{dir / self.channel_name}/%(upload_date)s %(title)s.%(ext)s"
+            },
+            "subtitleslangs": self.subtitle_languages,
+            "writedescription": True,
+            "writesubtitles": True,
+            "writethumbnail": True,
+            "progress_hooks": [set_filename],
+            **build_cookie_opts(self.cookies_file, self.browser),
+            "extractor_args": {
+                "youtube": {
+                    "player_client": player_clients or DEFAULT_PLAYER_CLIENTS,
+                }
+            },
+            "downloader_args": {
+                "ffmpeg_i": DEFAULT_FFMPEG_ARGS,
+            },
+            "sleep_interval": DEFAULT_MIN_SLEEP_INTERVAL,
+            "max_sleep_interval": DEFAULT_MAX_SLEEP_INTERVAL,
+            "js_runtimes": DEFAULT_JS_RUNTIMES,
+            "remote_components": DEFAULT_REMOTE_COMPONENTS,
+        }
+
+    @staticmethod
+    def _is_age_restricted_error(error_msg: str) -> bool:
+        """Check if a download error is due to age restriction."""
+        age_keywords = [
+            "Sign in to confirm your age",
+            "age-restricted",
+            "age_verification_required",
+        ]
+        return any(kw in error_msg for kw in age_keywords)
+
     def download(self, dir: Path) -> Path | None:
         """Download the video using yt-dlp.
 
         Downloads the video with configured quality settings, subtitles,
-        and metadata (description, thumbnail).
+        and metadata (description, thumbnail). If the first attempt fails
+        due to age restriction, retries with alternative player clients
+        optimized for age-gated content.
 
         Args:
             dir: Target directory for the downloaded video.
@@ -172,35 +225,24 @@ class Video(IVideo):
             nonlocal filename
             filename = d
 
-        ydl_opts = {
-            "format": f"bestvideo[height<={self.max_height}][vcodec!~='vp0?9']+bestaudio/best",
-            "outtmpl": {
-                "default": f"{dir / self.channel_name}/%(upload_date)s %(title)s.%(ext)s"
-            },
-            "subtitleslangs": self.subtitle_languages,
-            "writedescription": True,
-            "writesubtitles": True,
-            "writethumbnail": True,
-            "progress_hooks": [set_filename],
-            **build_cookie_opts(self.cookies_file, self.browser),
-            # Updated extractor_args for 2026 YouTube changes
-            # android_sdkless is deprecated and must be excluded
-            "extractor_args": {
-                "youtube": {
-                    "player_client": DEFAULT_PLAYER_CLIENTS,
-                }
-            },
-            # FFmpeg reconnect args for network resilience
-            "downloader_args": {
-                "ffmpeg_i": DEFAULT_FFMPEG_ARGS,
-            },
-            # Sleep intervals to avoid rate limiting
-            "sleep_interval": DEFAULT_MIN_SLEEP_INTERVAL,
-            "max_sleep_interval": DEFAULT_MAX_SLEEP_INTERVAL,
-        }
-
+        ydl_opts = self._build_ydl_opts(dir, set_filename)
         yt = yt_dlp.YoutubeDL(params=ydl_opts)  # pyright: ignore[reportArgumentType]
-        yt.download(self.url)
+        try:
+            yt.download(self.url)
+        except yt_dlp.DownloadError as e:  # pyright: ignore[reportAttributeAccessIssue]
+            if not self._is_age_restricted_error(str(e)):
+                raise
+            logger.warning(
+                "Age-restricted video '%s', retrying with alternative player clients...",
+                self.title,
+            )
+            filename = None
+            ydl_opts = self._build_ydl_opts(
+                dir, set_filename, player_clients=AGE_RESTRICTED_PLAYER_CLIENTS
+            )
+            yt = yt_dlp.YoutubeDL(params=ydl_opts)  # pyright: ignore[reportArgumentType]
+            yt.download(self.url)
+
         if filename is not None and "filename" in filename:
             return Path(filename["filename"])
         return None

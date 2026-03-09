@@ -12,7 +12,12 @@ from typing import Any, Iterator
 import toml
 import yt_dlp
 
-from .common import DEFAULT_MAX_HEIGHT, build_cookie_opts
+from .common import (
+    DEFAULT_JS_RUNTIMES,
+    DEFAULT_MAX_HEIGHT,
+    DEFAULT_REMOTE_COMPONENTS,
+    build_cookie_opts,
+)
 from .ifaces import IVideo, IVideos
 from .video import Video
 
@@ -140,6 +145,8 @@ class Videos(IVideos):
                             "player_js_version": ["actual"],
                         }
                     },
+                    "js_runtimes": DEFAULT_JS_RUNTIMES,
+                    "remote_components": DEFAULT_REMOTE_COMPONENTS,
                 }
             )
             ans = yt.extract_info(url=str(self.link))
@@ -169,6 +176,8 @@ class Videos(IVideos):
                         "player_js_version": ["actual"],
                     }
                 },
+                "js_runtimes": DEFAULT_JS_RUNTIMES,
+                "remote_components": DEFAULT_REMOTE_COMPONENTS,
             }
         )
         ans = yt.extract_info(url=str(self.link))

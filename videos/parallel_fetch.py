@@ -12,6 +12,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+import yt_dlp
+
 from rich.console import Console
 from rich.progress import (
     BarColumn,
@@ -102,6 +104,11 @@ class ParallelFetcher:
         self._shutdown_requested = False
         self._start_time: float | None = None
         self._elapsed_time: float = 0.0
+
+        # Pre-load yt-dlp plugins in the main thread to avoid
+        # duplicate registration errors when multiple threads
+        # create YoutubeDL instances concurrently.
+        yt_dlp.YoutubeDL({"quiet": True, "no_color": True})  # pyright: ignore[reportArgumentType]
 
     def request_shutdown(self) -> None:
         """Request graceful shutdown of the fetcher.
